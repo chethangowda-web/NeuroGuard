@@ -1,0 +1,3136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroGuard — AI Predictive Maintenance</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #0A0C10;
+      --bg2: #0F1117;
+      --bg3: #161B24;
+      --bg4: #1C2333;
+      --border: #1E2D42;
+      --border2: #263347;
+      --accent: #3B82F6;
+      --accent2: #06B6D4;
+      --accent3: #8B5CF6;
+      --ok: #10B981;
+      --warn: #F59E0B;
+      --crit: #EF4444;
+      --info: #3B82F6;
+      --txt: #E2E8F0;
+      --txt2: #94A3B8;
+      --txt3: #64748B;
+      --font: 'IBM Plex Sans', sans-serif;
+      --mono: 'IBM Plex Mono', monospace;
+      --r: 6px;
+      --r2: 10px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--txt);
+      font-family: var(--font);
+      font-size: 13px
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg2)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px
+    }
+
+    /* SHELL */
+    .shell {
+      display: flex;
+      height: 100vh;
+      overflow: hidden
+    }
+
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0
+    }
+
+    .logo-block {
+      padding: 18px 16px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--txt);
+      letter-spacing: -0.3px
+    }
+
+    .logo-tag {
+      font-size: 10px;
+      color: var(--txt3);
+      font-family: var(--mono);
+      margin-top: 2px
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ok);
+      display: inline-block;
+      margin-right: 6px;
+      animation: pulse 2s infinite
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, .4)
+      }
+
+      50% {
+        opacity: .8;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0)
+      }
+    }
+
+    .nav-section {
+      padding: 12px 0
+    }
+
+    .nav-label {
+      padding: 4px 16px;
+      font-size: 10px;
+      color: var(--txt3);
+      font-family: var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 2px
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--txt2);
+      transition: all .15s;
+      border-left: 2px solid transparent
+    }
+
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--txt)
+    }
+
+    .nav-item.active {
+      background: rgba(59, 130, 246, .08);
+      color: var(--accent);
+      border-left-color: var(--accent);
+      font-weight: 500
+    }
+
+    .nav-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      opacity: .7
+    }
+
+    .nav-item.active .nav-icon {
+      opacity: 1
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      padding: 12px 0
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden
+    }
+
+    .topbar {
+      height: 44px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+      background: var(--bg2)
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px
+    }
+
+    .topbar-title {
+      font-size: 14px;
+      font-weight: 500
+    }
+
+    .breadcrumb {
+      font-size: 11px;
+      color: var(--txt3);
+      font-family: var(--mono)
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-family: var(--mono)
+    }
+
+    .pill-ok {
+      background: rgba(16, 185, 129, .12);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, .2)
+    }
+
+    .pill-warn {
+      background: rgba(245, 158, 11, .12);
+      color: #FCD34D;
+      border: 1px solid rgba(245, 158, 11, .2)
+    }
+
+    .pill-crit {
+      background: rgba(239, 68, 68, .12);
+      color: #FCA5A5;
+      border: 1px solid rgba(239, 68, 68, .2)
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px
+    }
+
+    .view {
+      display: none
+    }
+
+    .view.active {
+      display: flex;
+      flex-direction: column;
+      gap: 14px
+    }
+
+    /* METRIC CARDS */
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px
+    }
+
+    .mcard {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      padding: 14px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .mcard::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-line, var(--border))
+    }
+
+    .mcard-label {
+      font-size: 10px;
+      color: var(--txt3);
+      font-family: var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 6px
+    }
+
+    .mcard-val {
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1;
+      font-family: var(--mono)
+    }
+
+    .mcard-sub {
+      font-size: 11px;
+      color: var(--txt3);
+      margin-top: 4px
+    }
+
+    /* PANELS */
+    .panel-row {
+      display: grid;
+      gap: 12px
+    }
+
+    .panel-row-2 {
+      grid-template-columns: 1fr 1fr
+    }
+
+    .panel-row-3 {
+      grid-template-columns: 2fr 1fr
+    }
+
+    .panel {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      padding: 14px
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px
+    }
+
+    .panel-title {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--txt3);
+      font-family: var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase
+    }
+
+    .chart-wrap {
+      position: relative
+    }
+
+    /* TABLE */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 6px 10px;
+      color: var(--txt3);
+      font-weight: 400;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .05em;
+      text-transform: uppercase
+    }
+
+    .data-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(30, 45, 66, .5)
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none
+    }
+
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, .02)
+    }
+
+    .health-bar {
+      height: 4px;
+      background: var(--bg4);
+      border-radius: 2px;
+      width: 80px
+    }
+
+    .health-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .3s
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 9px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 500;
+      font-family: var(--mono);
+      letter-spacing: .04em
+    }
+
+    .badge::before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor
+    }
+
+    .badge-ok {
+      background: rgba(16, 185, 129, .1);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, .2)
+    }
+
+    .badge-warn {
+      background: rgba(245, 158, 11, .1);
+      color: #FCD34D;
+      border: 1px solid rgba(245, 158, 11, .2)
+    }
+
+    .badge-crit {
+      background: rgba(239, 68, 68, .1);
+      color: #FCA5A5;
+      border: 1px solid rgba(239, 68, 68, .2)
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--r);
+      font-size: 12px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all .15s;
+      border: 1px solid var(--border);
+      background: var(--bg4);
+      color: var(--txt2)
+    }
+
+    .btn:hover {
+      background: var(--bg3);
+      color: var(--txt);
+      border-color: var(--border2)
+    }
+
+    .btn:disabled {
+      opacity: .4;
+      cursor: not-allowed
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent)
+    }
+
+    .btn-primary:hover {
+      background: #2563EB;
+      border-color: #2563EB
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, .1);
+      color: #FCA5A5;
+      border-color: rgba(239, 68, 68, .3)
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, .2)
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 11px
+    }
+
+    .btn-full {
+      width: 100%
+    }
+
+    .btn-loading {
+      pointer-events: none;
+      opacity: .7
+    }
+
+    /* ALERTS */
+    .alert-item {
+      padding: 10px 12px;
+      border-radius: var(--r);
+      border-left: 2px solid;
+      margin-bottom: 6px;
+      font-size: 12px
+    }
+
+    .alert-crit {
+      border-color: var(--crit);
+      background: rgba(239, 68, 68, .06)
+    }
+
+    .alert-warn {
+      border-color: var(--warn);
+      background: rgba(245, 158, 11, .06)
+    }
+
+    .alert-info {
+      border-color: var(--info);
+      background: rgba(59, 130, 246, .06)
+    }
+
+    .alert-ok {
+      border-color: var(--ok);
+      background: rgba(16, 185, 129, .06)
+    }
+
+    .alert-title {
+      font-weight: 500;
+      margin-bottom: 2px
+    }
+
+    .alert-msg {
+      color: var(--txt2)
+    }
+
+    .alert-meta {
+      font-size: 10px;
+      color: var(--txt3);
+      margin-top: 3px;
+      font-family: var(--mono)
+    }
+
+    .alert-dash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 10px
+    }
+
+    .alert-dash-card {
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 12px;
+      font-size: 12px
+    }
+
+    .alert-dash-card .dash-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      align-items: center
+    }
+
+    .alert-dash-card .dash-label {
+      font-size: 10px;
+      color: var(--txt3);
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .06em
+    }
+
+    .alert-dash-card .dash-val {
+      color: var(--txt2);
+      font-family: var(--mono);
+      text-align: right;
+      max-width: 60%;
+      word-break: break-all
+    }
+
+    /* FORM */
+    .form-group {
+      margin-bottom: 10px
+    }
+
+    .form-label {
+      display: block;
+      font-size: 10px;
+      color: var(--txt3);
+      font-family: var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 4px
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 7px 10px;
+      color: var(--txt);
+      font-family: var(--mono);
+      font-size: 12px;
+      outline: none;
+      resize: vertical
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, .12)
+    }
+
+    textarea.form-input {
+      min-height: 70px
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent)
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--txt2);
+      margin-bottom: 4px
+    }
+
+    /* SHAP */
+    .shap-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px
+    }
+
+    .shap-feature {
+      width: 110px;
+      flex-shrink: 0;
+      color: var(--txt2);
+      text-align: right;
+      font-size: 11px;
+      font-family: var(--mono)
+    }
+
+    .shap-bar-wrap {
+      flex: 1;
+      height: 12px;
+      background: var(--bg4);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative
+    }
+
+    .shap-bar {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .4s cubic-bezier(.4, 0, .2, 1)
+    }
+
+    .shap-val {
+      width: 40px;
+      text-align: right;
+      font-size: 10px;
+      color: var(--txt3);
+      font-family: var(--mono)
+    }
+
+    /* OUTPUT AREAS */
+    .output-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--txt2);
+      white-space: pre-wrap;
+      max-height: 280px;
+      overflow-y: auto;
+      line-height: 1.6
+    }
+
+    .output-block.streaming {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, .1)
+    }
+
+    /* LOADING SPINNER */
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, .2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .6s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 1px;
+      background: var(--bg4);
+      border-radius: var(--r);
+      padding: 3px;
+      margin-bottom: 14px
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 4px;
+      color: var(--txt2);
+      transition: all .15s;
+      font-family: var(--mono)
+    }
+
+    .tab.active {
+      background: var(--bg3);
+      color: var(--txt);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .3)
+    }
+
+    /* STATUS ROW */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--txt3);
+      padding: 6px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 6px;
+      font-family: var(--mono)
+    }
+
+    /* CODE TABS */
+    .code-section {
+      display: none
+    }
+
+    .code-section.active {
+      display: block
+    }
+
+    .code-tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0
+    }
+
+    .code-tab {
+      padding: 6px 14px;
+      font-size: 10px;
+      cursor: pointer;
+      color: var(--txt3);
+      font-family: var(--mono);
+      border-bottom: 2px solid transparent;
+      transition: all .15s
+    }
+
+    .code-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent)
+    }
+
+    /* SCROLLABLE PANEL */
+    .scrollable {
+      max-height: 320px;
+      overflow-y: auto
+    }
+
+    /* GRID for deploy */
+    .deploy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    /* SERVER ACTIONS */
+    .action-btn-group {
+      display: flex;
+      gap: 4px
+    }
+
+    /* PROGRESS BAR */
+    .progress-bar {
+      height: 3px;
+      background: var(--bg4);
+      border-radius: 2px;
+      margin-top: 6px;
+      overflow: hidden
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 1s ease
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="logo-block">
+        <div class="logo-name">⬡ NeuroGuard</div>
+        <div class="logo-tag"><span class="live-dot"></span>AI · PREDICT · SIMULATE</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Monitor</div>
+        <div class="nav-item active" onclick="showView('overview')">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1" y="1" width="6" height="6" rx="1" />
+            <rect x="9" y="1" width="6" height="6" rx="1" />
+            <rect x="1" y="9" width="6" height="6" rx="1" />
+            <rect x="9" y="9" width="6" height="6" rx="1" />
+          </svg>
+          Overview
+        </div>
+        <div class="nav-item" onclick="showView('servers')">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1" y="2" width="14" height="4" rx="1" />
+            <rect x="1" y="8" width="14" height="4" rx="1" />
+            <circle cx="12" cy="4" r="1" fill="currentColor" />
+            <circle cx="12" cy="10" r="1" fill="currentColor" />
+          </svg>
+          Servers
+        </div>
+        <div class="nav-label" style="margin-top:8px">Predict & Act</div>
+        <div class="nav-item" onclick="showView('predict')">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 12 L5 8 L8 10 L11 4 L14 6" />
+            <circle cx="14" cy="6" r="1.5" fill="currentColor" />
+          </svg>
+          Predict
+        </div>
+        <div class="nav-item" onclick="showView('twin')">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="5" cy="8" r="3" />
+            <circle cx="11" cy="8" r="3" />
+            <line x1="8" y1="5" x2="8" y2="11" />
+          </svg>
+          Digital Twin
+        </div>
+        <div class="nav-item" onclick="showView('autoheal')">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8 2v4M8 10v4M2 8h4M10 8h4" stroke-linecap="round" />
+            <circle cx="8" cy="8" r="2" />
+          </svg>
+          Auto-Heal
+        </div>
+        <div class="nav-label" style="margin-top:8px">Intelligence</div>
+        <div class="nav-item" onclick="showView('xai')">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8 2a4 4 0 0 1 0 8" />
+            <path d="M8 10v4" />
+            <circle cx="8" cy="14" r=".5" fill="currentColor" />
+          </svg>
+          Explainability
+        </div>
+        <div class="nav-item" onclick="showView('alerts')">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8 2a5 5 0 0 1 5 5v3l1 2H2l1-2V7a5 5 0 0 1 5-5z" />
+            <path d="M6 13a2 2 0 0 0 4 0" />
+          </svg>
+          Alerts
+          <span id="alert-badge"
+            style="margin-left:auto;background:var(--crit);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;font-family:var(--mono)">2</span>
+        </div>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="nav-label">Deploy</div>
+        <div class="nav-item" onclick="showView('deploy')">
+          <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8 10V2M5 5l3-3 3 3" />
+            <path d="M3 11v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2" />
+          </svg>
+          Deploy & Docs
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title" id="view-title">Fleet Overview</div>
+        </div>
+        <div class="topbar-right">
+          <span style="font-size:10px;color:var(--txt3);font-family:var(--mono)" id="clock">--:--:--</span>
+          <span class="pill pill-ok"><span class="live-dot" style="width:5px;height:5px;margin-right:3px"></span>DATASET
+            AI</span>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- ====== OVERVIEW ====== -->
+        <div class="view active" id="view-overview">
+          <div class="metric-row">
+            <div class="mcard" style="--accent-line:#10B981">
+              <div class="mcard-label">Fleet Health Index</div>
+              <div class="mcard-val" style="color:#34D399" id="ov-health">78%</div>
+              <div class="mcard-sub" id="ov-health-sub">↑ 2% from last cycle</div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="ov-health-bar"
+                  style="width:78%;background:linear-gradient(90deg,#10B981,#34D399)"></div>
+              </div>
+            </div>
+            <div class="mcard" style="--accent-line:#EF4444">
+              <div class="mcard-label">Servers At Risk</div>
+              <div class="mcard-val" style="color:#FCA5A5" id="ov-risk">3</div>
+              <div class="mcard-sub" id="ov-risk-sub">2 critical · 1 warning</div>
+            </div>
+            <div class="mcard" style="--accent-line:#F59E0B">
+              <div class="mcard-label">Anomalies (1h)</div>
+              <div class="mcard-val" id="ov-anomalies">14</div>
+              <div class="mcard-sub">↑ 6 vs rolling avg</div>
+            </div>
+            <div class="mcard" style="--accent-line:#8B5CF6">
+              <div class="mcard-label">Predictions Run</div>
+              <div class="mcard-val" style="color:#A78BFA" id="ov-predictions">0</div>
+              <div class="mcard-sub">total via /predict</div>
+            </div>
+          </div>
+
+          <div class="panel-row panel-row-3">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">CPU Usage — Fleet (30 min)</div>
+                <span class="pill pill-warn">2 spikes</span>
+              </div>
+              <div class="chart-wrap" style="height:150px"><canvas id="cpuChart"></canvas></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Failure Risk Distribution</div>
+              </div>
+              <div class="chart-wrap" style="height:120px"><canvas id="riskChart"></canvas></div>
+              <div
+                style="display:flex;gap:12px;justify-content:center;margin-top:8px;font-size:10px;font-family:var(--mono)">
+                <span style="color:#FCA5A5">● CRIT <span id="ov-crit-count">2</span></span>
+                <span style="color:#FCD34D">● WARN <span id="ov-warn-count">3</span></span>
+                <span style="color:#34D399">● SAFE <span id="ov-ok-count">7</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Server Fleet Health Summary</div>
+              <button class="btn btn-sm" onclick="showView('predict')">+ Run Prediction</button>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Server</th>
+                  <th>Health</th>
+                  <th>CPU</th>
+                  <th>RAM</th>
+                  <th>Disk</th>
+                  <th>Fail Prob</th>
+                  <th>TTF Est</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="overview-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ====== SERVERS ====== -->
+        <div class="view" id="view-servers">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">All Servers — Live Metrics</div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-sm" onclick="refreshServers()">↻ Refresh</button>
+                <button class="btn btn-sm btn-primary" onclick="showView('predict')">+ Predict</button>
+              </div>
+            </div>
+            <table class="data-table" id="servers-full-table">
+              <thead>
+                <tr>
+                  <th>Server</th>
+                  <th>Role</th>
+                  <th>CPU</th>
+                  <th>RAM</th>
+                  <th>Disk I/O</th>
+                  <th>Network</th>
+                  <th>Health</th>
+                  <th>Fail Prob</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="servers-full-tbody"></tbody>
+            </table>
+          </div>
+          <div class="panel-row panel-row-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Alert Timeline (24h)</div>
+              </div>
+              <div class="chart-wrap" style="height:140px"><canvas id="alertChart"></canvas></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Fleet Statistics</div>
+              </div>
+              <div id="fleet-stats" style="font-size:12px;color:var(--txt2)"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== PREDICT ====== -->
+        <div class="view" id="view-predict">
+          <div class="panel-row panel-row-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">AUTO MONITORING ACTIVE</div>
+                <span class="pill"
+                  style="background:rgba(59,130,246,.1);color:#93C5FD;border-color:rgba(59,130,246,.2);font-family:var(--mono);font-size:9px">LIVE
+                  AI</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:10px">
+                  <div style="font-size:10px;color:var(--txt3);font-family:var(--mono)">CONNECTION STATUS</div>
+                  <div id="auto-connection-status" style="font-size:14px;font-weight:600;color:#34D399">CONNECTED</div>
+                </div>
+                <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:10px">
+                  <div style="font-size:10px;color:var(--txt3);font-family:var(--mono)">PREDICTION STATUS</div>
+                  <div id="auto-prediction-status" style="font-size:14px;font-weight:600;color:#93C5FD">RUNNING</div>
+                </div>
+                <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:10px">
+                  <div style="font-size:10px;color:var(--txt3);font-family:var(--mono)">LIVE SERVER</div>
+                  <div id="auto-live-server" style="font-size:14px;font-weight:600">--</div>
+                </div>
+                <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:10px">
+                  <div style="font-size:10px;color:var(--txt3);font-family:var(--mono)">LAST PREDICTION</div>
+                  <div id="auto-last-prediction" style="font-size:14px;font-weight:600">--:--:--</div>
+                </div>
+              </div>
+              <div class="output-block" id="auto-live-metrics" style="margin-top:10px;min-height:90px">// Waiting for
+                live metrics...</div>
+              <div style="display:none">
+                <input class="form-input" type="number" id="p-cpu" value="91">
+                <input class="form-input" type="number" id="p-ram" value="87">
+                <input class="form-input" type="number" id="p-disk" value="62">
+                <input class="form-input" type="number" id="p-net" value="4">
+                <textarea class="form-input" id="p-logs">kernel: Out of memory</textarea>
+              </div>
+              <div class="status-row" id="predict-status" style="display:none"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Prediction Results</div>
+                <span id="predict-time" style="font-size:10px;color:var(--txt3);font-family:var(--mono)"></span>
+              </div>
+              <div id="predict-results">
+                <div style="color:var(--txt3);font-size:12px;text-align:center;padding:40px 0">
+                  <div style="font-size:24px;margin-bottom:8px">⬡</div>
+                  Input server metrics and run prediction to see AI analysis
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Raw API Response — /predict</div>
+              <button class="btn btn-sm" onclick="copyOutput('predict-raw')">Copy JSON</button>
+            </div>
+            <div class="output-block" id="predict-raw" style="min-height:80px">// Output will appear here after
+              prediction</div>
+          </div>
+        </div>
+
+        <!-- ====== DIGITAL TWIN ====== -->
+        <div class="view" id="view-twin">
+          <div class="panel-row panel-row-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Digital Twin — POST /simulate</div>
+                <span class="pill"
+                  style="background:rgba(139,92,246,.1);color:#C4B5FD;border-color:rgba(139,92,246,.2);font-family:var(--mono);font-size:9px">SIMULATION</span>
+              </div>
+              <div class="form-group">
+                <div class="slider-label"><span>CPU Load Multiplier</span><span id="cpu-mult-val"
+                    style="font-family:var(--mono);color:var(--accent)">1.5×</span></div>
+                <input type="range" min="1" max="4" step="0.1" value="1.5" id="cpu-mult" oninput="updateSim()">
+              </div>
+              <div class="form-group">
+                <div class="slider-label"><span>Memory Pressure</span><span id="mem-press-val"
+                    style="font-family:var(--mono);color:var(--accent)">60%</span></div>
+                <input type="range" min="30" max="100" step="1" value="60" id="mem-press" oninput="updateSim()">
+              </div>
+              <div class="form-group">
+                <div class="slider-label"><span>Disk I/O Saturation</span><span id="disk-sat-val"
+                    style="font-family:var(--mono);color:var(--accent)">40%</span></div>
+                <input type="range" min="0" max="100" step="1" value="40" id="disk-sat" oninput="updateSim()">
+              </div>
+              <div class="form-group">
+                <div class="slider-label"><span>Network Packet Loss</span><span id="net-loss-val"
+                    style="font-family:var(--mono);color:var(--accent)">2%</span></div>
+                <input type="range" min="0" max="30" step="1" value="2" id="net-loss" oninput="updateSim()">
+              </div>
+              <div
+                style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:10px;margin-top:8px">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+                  <div>
+                    <div style="font-size:10px;color:var(--txt3);font-family:var(--mono)">HEALTH</div>
+                    <div style="font-size:20px;font-weight:600;font-family:var(--mono)" id="sim-health">51%</div>
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--txt3);font-family:var(--mono)">FAIL PROB</div>
+                    <div style="font-size:20px;font-weight:600;font-family:var(--mono);color:#FCA5A5"
+                      id="sim-fail-prob">67%</div>
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--txt3);font-family:var(--mono)">TTF EST</div>
+                    <div style="font-size:20px;font-weight:600;font-family:var(--mono)" id="sim-ttf">8.2h</div>
+                  </div>
+                </div>
+                <div
+                  style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--txt2)"
+                  id="sim-rec">Adjust sliders to simulate load scenarios</div>
+              </div>
+              <button class="btn btn-primary btn-full" style="margin-top:10px" id="autoheal-from-twin-btn"
+                onclick="runAutoHealFromTwin()">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 1v5M3 4l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  <path d="M2 8.5A4 4 0 0 0 10 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+                Generate Auto-Heal Playbook
+              </button>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Simulated Future State (Next 24 Hours)</div>
+              </div>
+              <div class="chart-wrap" style="height:260px"><canvas id="simChart"></canvas></div>
+              <div style="display:flex;gap:16px;margin-top:8px;font-size:10px;font-family:var(--mono)">
+                <span style="color:#8B5CF6">— Predicted</span>
+                <span style="color:#34D399;opacity:.7">--- Baseline</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== AUTO-HEAL ====== -->
+        <div class="view" id="view-autoheal">
+          <div class="panel-row panel-row-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">POST /auto-heal — Configure Scenario</div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">CPU (%)</label>
+                  <input class="form-input" type="number" id="ah-cpu" value="91" min="0" max="100">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">RAM (%)</label>
+                  <input class="form-input" type="number" id="ah-ram" value="87" min="0" max="100">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Disk (%)</label>
+                  <input class="form-input" type="number" id="ah-disk" value="62" min="0" max="100">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Failure Prob (%)</label>
+                  <input class="form-input" type="number" id="ah-prob" value="84" min="0" max="100">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Server Name</label>
+                <div class="form-input" id="ah-server-display"
+                  style="display:flex;align-items:center;min-height:36px;color:var(--txt2)">Auto-detected from live
+                  metrics</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Kubernetes Namespace</label>
+                <input class="form-input" type="text" id="ah-ns" value="production" placeholder="production">
+              </div>
+              <button class="btn btn-primary btn-full" id="autoheal-btn" onclick="runAutoHeal()">
+                Generate Auto-Heal Playbook
+              </button>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Decision Engine — Triggered Actions</div>
+              </div>
+              <div id="autoheal-actions" style="color:var(--txt3);font-size:12px;text-align:center;padding:30px 0">
+                Configure scenario and generate playbook
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Generated Playbook</div>
+              <div style="display:flex;gap:6px">
+                <div class="code-tab-bar" id="playbook-tabs">
+                  <div class="code-tab active" onclick="switchPlaybookTab('bash')">bash script</div>
+                  <div class="code-tab" onclick="switchPlaybookTab('k8s')">kubernetes yaml</div>
+                  <div class="code-tab" onclick="switchPlaybookTab('runbook')">runbook</div>
+                </div>
+                <button class="btn btn-sm" onclick="copyActivePlaybook()" style="margin-left:8px">Copy</button>
+              </div>
+            </div>
+            <div id="playbook-bash" class="code-section active">
+              <div class="output-block" id="playbook-bash-content" style="min-height:100px">// Bash script will appear
+                here</div>
+            </div>
+            <div id="playbook-k8s" class="code-section">
+              <div class="output-block" id="playbook-k8s-content" style="min-height:100px">// Kubernetes YAML will
+                appear here</div>
+            </div>
+            <div id="playbook-runbook" class="code-section">
+              <div class="output-block" id="playbook-runbook-content" style="min-height:100px">// Runbook will appear
+                here</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== XAI ====== -->
+        <div class="view" id="view-xai">
+          <div class="panel-row panel-row-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">POST /explain — Input Metrics</div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">CPU (%)</label>
+                  <input class="form-input" type="number" id="xai-cpu" value="91" min="0" max="100">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">RAM (%)</label>
+                  <input class="form-input" type="number" id="xai-ram" value="87" min="0" max="100">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Disk (%)</label>
+                  <input class="form-input" type="number" id="xai-disk" value="62" min="0" max="100">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Network Loss (%)</label>
+                  <input class="form-input" type="number" id="xai-net" value="4" min="0" max="100">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Logs</label>
+                <textarea class="form-input" id="xai-logs">kernel: Out of memory: Kill process 1234
+WARNING: CPU temperature threshold exceeded</textarea>
+              </div>
+              <button class="btn btn-primary btn-full" id="explain-btn" onclick="runExplain()">
+                Explain in Plain Language
+              </button>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">SHAP Feature Importance</div>
+              </div>
+              <div id="shap-chart" style="padding-top:8px"></div>
+              <div
+                style="margin-top:12px;background:var(--bg4);border-radius:var(--r);padding:10px;font-size:10px;color:var(--txt3);font-family:var(--mono)"
+                id="shap-meta">
+                Model: XGBoost Ensemble · Confidence: — · Run /explain to compute
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">AI Explanation — Plain Language</div>
+              <span class="pill"
+                style="background:rgba(59,130,246,.1);color:#93C5FD;border-color:rgba(59,130,246,.2);font-family:var(--mono);font-size:9px">CLAUDE
+                AI</span>
+            </div>
+            <div class="output-block streaming" id="explain-output"
+              style="font-family:var(--font);font-size:13px;min-height:80px;line-height:1.7">
+              Run /explain to receive an AI-generated plain-language analysis of your server's health and failure risk
+              factors.
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== ALERTS ====== -->
+        <div class="view" id="view-alerts">
+          <div class="panel-row panel-row-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">SMS Routing Active</div>
+                <span class="badge badge-ok" style="background:rgba(52,211,153,.15);color:#34D399;border:1px solid #34D39340">● Live Simulation</span>
+              </div>
+              <p style="font-size:11px;color:var(--txt3);margin-bottom:12px;line-height:1.6">
+                Auto-assigned demo numbers per server. SMS is simulated locally — Pending → Sending → Delivered.
+                Status changes trigger automatic routing. No backend fetch required.
+              </p>
+              <div id="alert-servers-dashboard" class="alert-dash-grid scrollable" style="max-height:340px;padding-right:4px">
+                <div style="color:var(--txt3);font-size:12px;padding:20px 0;text-align:center;grid-column:1/-1">
+                  <span class="live-dot"></span>&nbsp; Initializing SMS routing…
+                </div>
+              </div>
+              <div style="margin-top:12px">
+                <div style="font-size:10px;color:var(--txt3);font-family:var(--mono);margin-bottom:8px">STATUS THRESHOLDS</div>
+                <div style="font-size:11px;color:var(--txt2);display:flex;flex-direction:column;gap:4px">
+                  <div style="display:flex;justify-content:space-between"><span><span class="badge badge-ok">NORMAL</span></span><span style="font-family:var(--mono)">&lt; 30% fail prob — no SMS</span></div>
+                  <div style="display:flex;justify-content:space-between"><span><span class="badge badge-warn">AT RISK</span></span><span style="font-family:var(--mono)">30–69% — Warning SMS sent</span></div>
+                  <div style="display:flex;justify-content:space-between"><span><span class="badge badge-crit">CRITICAL</span></span><span style="font-family:var(--mono)">≥ 70% — Emergency SMS sent</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Alert Manager Output</div>
+              </div>
+              <div id="alert-result" style="color:var(--txt3);font-size:12px;text-align:center;padding:30px 0">
+                Awaiting first sensor update…
+              </div>
+            </div>
+          </div>
+          <div class="panel-row panel-row-2">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Recent Alert Log</div>
+                <button class="btn btn-sm btn-danger" onclick="clearAlerts()">Clear</button>
+              </div>
+              <div id="active-alerts-list">
+                <div style="color:var(--txt3);font-size:12px;padding:16px 0;text-align:center">
+                  <span class="live-dot"></span>&nbsp; Awaiting alerts…
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Alert Distribution (24h)</div>
+              </div>
+              <div class="chart-wrap" style="height:140px"><canvas id="alertChart2"></canvas></div>
+              <div style="margin-top:10px;font-size:11px;color:var(--txt2);display:flex;flex-direction:column;gap:4px">
+                <div style="display:flex;justify-content:space-between"><span>Critical alerts</span><span style="font-family:var(--mono);color:#FCA5A5" id="alert-crit-count">0</span></div>
+                <div style="display:flex;justify-content:space-between"><span>Warnings</span><span style="font-family:var(--mono);color:#FCD34D" id="alert-warn-count">0</span></div>
+                <div style="display:flex;justify-content:space-between"><span>SMS delivered</span><span style="font-family:var(--mono);color:#34D399" id="alert-dedup-count">0</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">SMS Dispatch Log</div>
+              <button class="btn btn-sm" onclick="copyOutput('alert-python')">Copy</button>
+            </div>
+            <div class="output-block" id="alert-python" style="min-height:80px">
+              # NeuroGuard SMS Simulation Engine
+              # Auto-routes alerts to assigned +91 numbers
+              # Dispatch log will appear here after first sensor update
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== DEPLOY ====== -->
+        <div class="view" id="view-deploy">
+          <div class="tabs" id="deploy-tabs">
+            <div class="tab active" onclick="switchDeployTab('dockerfile')">Dockerfile</div>
+            <div class="tab" onclick="switchDeployTab('k8s')">Kubernetes YAML</div>
+            <div class="tab" onclick="switchDeployTab('backend')">FastAPI Backend</div>
+            <div class="tab" onclick="switchDeployTab('apidocs')">API Docs</div>
+          </div>
+
+          <div id="dt-dockerfile" class="code-section active">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Dockerfile — Production Ready</div>
+                <button class="btn btn-sm" onclick="copyOutput('deploy-dockerfile')">Copy</button>
+              </div>
+              <div class="output-block" id="deploy-dockerfile"></div>
+            </div>
+          </div>
+          <div id="dt-k8s" class="code-section">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">Kubernetes Deployment + HPA + Service</div>
+                <button class="btn btn-sm" onclick="copyOutput('deploy-k8s')">Copy</button>
+              </div>
+              <div class="output-block" id="deploy-k8s"></div>
+            </div>
+          </div>
+          <div id="dt-backend" class="code-section">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">FastAPI Backend — main.py</div>
+                <button class="btn btn-sm" onclick="copyOutput('deploy-backend')">Copy</button>
+              </div>
+              <div class="output-block" id="deploy-backend"></div>
+            </div>
+          </div>
+          <div id="dt-apidocs" class="code-section">
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">API Documentation — Endpoints &amp; Examples</div>
+              </div>
+              <div id="api-docs-content"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div><!-- /shell -->
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    // NEUROGUARD — FULLY FUNCTIONAL AI PREDICTIVE MAINTENANCE SYSTEM
+    // ═══════════════════════════════════════════════════════════════
+
+    const API_KEY = localStorage.getItem("GROQ_API_KEY") || prompt("Groq API Key (gsk_...):");
+    if (!localStorage.getItem("GROQ_API_KEY") && API_KEY) localStorage.setItem("GROQ_API_KEY", API_KEY); // Anthropic API key handled by claude.ai proxy
+    const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+    const MODEL = "llama3-70b-8192";
+
+    // State
+    let predictionCount = 0;
+    let alertCount = { crit: 0, warn: 0, dedup: 0 };
+    let activePlaybookTab = 'bash';
+    let simChartInstance = null;
+    let datasetsLoaded = false;
+    let datasetIntervalId = null;
+    const machineHistory = new Map();
+    const machinePointers = new Map();
+    const REGISTERED_ALERT_NUMBERS = ["9880570117", "9483301006"];
+    let currentPredictServer = "";
+    let lastPredictMetrics = null;
+    let lastTwinMetrics = null;
+    let lastPredictInput = null;
+    let lastTwinInput = null;
+    let autoMonitoringIntervalId = null;
+    let lastAutoHealKey = "";
+    let lastDetectedIssue = "System anomaly detected";
+    const NEUROGUARD_API_BASE = (window.location.hostname === '127.0.0.1' && window.location.port !== '5500' && window.location.port !== '3000') ? '' : 'http://127.0.0.1:8001';
+    let alertDashboardTimer = null;
+
+    // ── BACKEND RATE LIMITER ──────────────────────────────────────
+    const BACKEND_SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+    let _lastBackendSyncTime = 0;
+    function _backendSyncAllowed() {
+      const now = Date.now();
+      if (now - _lastBackendSyncTime >= BACKEND_SYNC_INTERVAL_MS) {
+        _lastBackendSyncTime = now;
+        return true;
+      }
+      return false;
+    }
+
+    // ── SERVER DATA (JSON-driven only) ───────────────────────────
+    let servers = [];
+
+    const roleByIndex = ['Machine A', 'Machine B', 'Machine C', 'Machine D', 'Machine E', 'Machine F', 'Machine G'];
+
+    function toPercent(value, min, max) {
+      const normalized = ((value - min) / (max - min)) * 100;
+      return Math.max(0, Math.min(100, Math.round(normalized)));
+    }
+
+    function mapReadingToServer(machineId, reading, index) {
+      const cpu = toPercent(reading.rpm ?? 1500, 1200, 1800);
+      const ram = toPercent(reading.current_A ?? 12, 7, 25);
+      const disk = toPercent(reading.vibration_mm_s ?? 2, 0.5, 8);
+      const net = toPercent(reading.temperature_C ?? 70, 35, 110);
+      const metrics = computeMetrics(cpu, ram, disk, net, `status:${reading.status || 'running'}`);
+      const severityToStatus = metrics.severity === 'CRITICAL' ? 'crit' : metrics.severity === 'WARNING' ? 'warn' : 'ok';
+      return {
+        name: machineId,
+        role: roleByIndex[index] || `Machine ${index + 1}`,
+        cpu,
+        ram,
+        disk,
+        net,
+        health: metrics.health_score,
+        failProb: metrics.failure_probability,
+        status: severityToStatus,
+        ttf: `~${metrics.time_to_failure}`
+      };
+    }
+
+    function updateOverviewCountersFromServers() {
+      const crit = servers.filter(s => s.status === 'crit').length;
+      const warn = servers.filter(s => s.status === 'warn').length;
+      const ok = servers.filter(s => s.status === 'ok').length;
+      const avgHealth = servers.length ? Math.round(servers.reduce((acc, s) => acc + s.health, 0) / servers.length) : 0;
+
+      const ovHealth = document.getElementById('ov-health');
+      const ovHealthBar = document.getElementById('ov-health-bar');
+      const ovRisk = document.getElementById('ov-risk');
+      const ovRiskSub = document.getElementById('ov-risk-sub');
+      const ovCrit = document.getElementById('ov-crit-count');
+      const ovWarn = document.getElementById('ov-warn-count');
+      const ovOk = document.getElementById('ov-ok-count');
+
+      if (ovHealth) ovHealth.textContent = `${avgHealth}%`;
+      if (ovHealthBar) ovHealthBar.style.width = `${avgHealth}%`;
+      if (ovRisk) ovRisk.textContent = String(crit + warn);
+      if (ovRiskSub) ovRiskSub.textContent = `${crit} critical · ${warn} warning`;
+      if (ovCrit) ovCrit.textContent = String(crit);
+      if (ovWarn) ovWarn.textContent = String(warn);
+      if (ovOk) ovOk.textContent = String(ok);
+      const pred = document.getElementById('ov-predictions');
+      if (pred) pred.textContent = String(predictionCount);
+    }
+
+    function getCurrentJsonReading(serverName) {
+      if (!machineHistory.has(serverName)) return null;
+      const readings = machineHistory.get(serverName) || [];
+      if (!readings.length) return null;
+      const pointer = machinePointers.get(serverName) || 0;
+      const safePointer = Math.min(pointer, readings.length - 1);
+      return readings[safePointer] || null;
+    }
+
+    function deriveJsonEvent(serverName, prediction) {
+      const reading = getCurrentJsonReading(serverName);
+      const status = String(reading?.status || "").toLowerCase();
+      const severity = status === "fault" ? "CRITICAL" : status === "warning" ? "WARNING" : prediction.severity;
+      const factors = Object.entries(prediction.risk_factors || {})
+        .filter(([, level]) => level === "HIGH" || level === "DETECTED")
+        .map(([factor]) => factor.replaceAll("_", " "));
+      const message = status
+        ? `JSON status=${status}. Drivers: ${factors.join(", ") || "none"}.`
+        : `JSON metrics indicate ${severity} risk. Drivers: ${factors.join(", ") || "none"}.`;
+      lastDetectedIssue = message;
+      const actions = factors.length
+        ? factors.map((f) => ({ title: `Mitigate ${f}`, detail: `Auto-remediation generated from JSON factor: ${f}.` }))
+        : [{ title: "Stabilize service", detail: "Apply baseline remediation and monitor next JSON frame." }];
+      return { severity, message, actions, reading };
+    }
+
+    function upsertServerFromMetrics(serverName, cpu, ram, disk, net, metrics) {
+      const idx = servers.findIndex((s) => s.name === serverName);
+      const mapped = {
+        name: serverName,
+        role: idx >= 0 ? servers[idx].role : "Predicted Node",
+        cpu: Math.round(cpu),
+        ram: Math.round(ram),
+        disk: Math.round(disk),
+        net: Math.round(net),
+        health: metrics.health_score,
+        failProb: metrics.failure_probability,
+        status: metrics.severity === "CRITICAL" ? "crit" : metrics.severity === "WARNING" ? "warn" : "ok",
+        ttf: `~${metrics.time_to_failure}`
+      };
+      if (idx >= 0) servers[idx] = mapped;
+      else servers.unshift(mapped);
+      buildOverviewTable();
+      buildServersTable();
+      updateOverviewCountersFromServers();
+    }
+
+    function renderPredictionCards(metrics, sourceMetrics) {
+      const sevColor = metrics.severity === 'CRITICAL' ? '#FCA5A5' : metrics.severity === 'WARNING' ? '#FCD34D' : '#34D399';
+      document.getElementById('predict-results').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="background:var(--bg4);border-radius:var(--r);padding:12px;text-align:center;border:1px solid ${sevColor}40">
+        <div style="font-size:10px;color:var(--txt3);font-family:var(--mono);margin-bottom:4px">FAILURE PROBABILITY</div>
+        <div style="font-size:28px;font-weight:600;font-family:var(--mono);color:${sevColor}">${metrics.failure_probability}%</div>
+      </div>
+      <div style="background:var(--bg4);border-radius:var(--r);padding:12px;text-align:center">
+        <div style="font-size:10px;color:var(--txt3);font-family:var(--mono);margin-bottom:4px">HEALTH SCORE</div>
+        <div style="font-size:28px;font-weight:600;font-family:var(--mono);color:#34D399">${metrics.health_score}%</div>
+      </div>
+      <div style="background:var(--bg4);border-radius:var(--r);padding:12px;text-align:center">
+        <div style="font-size:10px;color:var(--txt3);font-family:var(--mono);margin-bottom:4px">TIME TO FAILURE</div>
+        <div style="font-size:28px;font-weight:600;font-family:var(--mono)">${metrics.time_to_failure}</div>
+      </div>
+    </div>
+    <div class="alert-item alert-${metrics.severity === 'CRITICAL' ? 'crit' : metrics.severity === 'WARNING' ? 'warn' : 'ok'}">
+      <div class="alert-title">Severity: ${metrics.severity} · Anomaly Score: ${metrics.anomaly_score}</div>
+      <div class="alert-msg">CPU: ${metrics.risk_factors.cpu_risk} · RAM: ${metrics.risk_factors.ram_risk} · Disk: ${metrics.risk_factors.disk_risk} · Net: ${metrics.risk_factors.net_risk}</div>
+      <div class="alert-meta">Temperature: ${sourceMetrics.temperature}C · Log errors: ${sourceMetrics.logErrors} · Computed at ${new Date().toLocaleTimeString()}</div>
+    </div>`;
+    }
+
+    function applyDatasetSnapshot() {
+      const machineIds = Array.from(machineHistory.keys());
+      if (!machineIds.length) return;
+      servers = machineIds.map((machineId, idx) => {
+        const readings = machineHistory.get(machineId) || [];
+        if (!readings.length) return null;
+        const pointer = machinePointers.get(machineId) || 0;
+        const safePointer = Math.min(pointer, readings.length - 1);
+        return mapReadingToServer(machineId, readings[safePointer], idx);
+      }).filter(Boolean);
+      buildOverviewTable();
+      buildServersTable();
+      updateOverviewCountersFromServers();
+    }
+
+    function stepDatasetPlayback() {
+      machineHistory.forEach((readings, machineId) => {
+        const current = machinePointers.get(machineId) || 0;
+        const next = readings.length ? (current + 1) % readings.length : 0;
+        machinePointers.set(machineId, next);
+      });
+      applyDatasetSnapshot();
+      _runLiveCycleAfterStep();
+    }
+
+    let _liveCycleRunning = false;
+    async function _runLiveCycleAfterStep() {
+      if (_liveCycleRunning) return;
+      _liveCycleRunning = true;
+      try {
+        const liveMetrics = await fetchLiveMetrics();
+        if (!liveMetrics) return;
+        const prediction = runPrediction(liveMetrics);
+        if (!prediction) return;
+        currentPredictServer = liveMetrics.server;
+        lastPredictMetrics = prediction;
+        lastPredictInput = { cpu: liveMetrics.cpu, ram: liveMetrics.ram, disk: liveMetrics.disk, net: liveMetrics.net };
+        predictionCount++;
+
+        renderPredictionCards(prediction, liveMetrics);
+        const rawEl = document.getElementById('predict-raw');
+        if (rawEl) rawEl.textContent = JSON.stringify({ liveMetrics, prediction }, null, 2);
+        const timeEl = document.getElementById('predict-time');
+        if (timeEl) timeEl.textContent = new Date().toLocaleTimeString() + ' · live';
+
+        buildShap(liveMetrics.cpu, liveMetrics.ram, liveMetrics.disk, liveMetrics.net);
+        const explainEl = document.getElementById('explain-output');
+        if (explainEl) explainEl.textContent = 'Live AI explanation: ' + prediction.server + ' risk is ' + prediction.failure_probability + '% (' + prediction.severity + '). Drivers: CPU ' + liveMetrics.cpu + '%, RAM ' + liveMetrics.ram + '%, Disk ' + liveMetrics.disk + '%, Log errors ' + liveMetrics.logErrors + '. Estimated TTF ' + prediction.time_to_failure + '.';
+
+        _autoUpdateTwin(liveMetrics);
+
+        if (prediction.failure_probability >= 30) {
+          const jsonEvent = deriveJsonEvent(prediction.server, prediction);
+          autoHeal(prediction, liveMetrics, jsonEvent);
+          _autoGenerateTwinPlaybook(prediction, liveMetrics);
+        }
+
+        upsertServerFromMetrics(liveMetrics.server, liveMetrics.cpu, liveMetrics.ram, liveMetrics.disk, liveMetrics.net, prediction);
+        updateAutoMonitoringPanel(liveMetrics, prediction);
+        // Rate-limited: only sync to backend once every 5 minutes to stop continuous buffering
+        if (_backendSyncAllowed()) {
+          triggerAlert({ server: prediction.server, failure_probability: prediction.failure_probability, liveMetrics }).catch(() => { });
+        }
+      } catch (e) {
+        console.error('Live cycle error:', e);
+      } finally {
+        _liveCycleRunning = false;
+      }
+    }
+
+    function _autoUpdateTwin(liveMetrics) {
+      try {
+        const cpuM = Math.max(1, Math.min(4, liveMetrics.cpu / 55)).toFixed(1);
+        const memP = Math.max(30, Math.min(100, liveMetrics.ram));
+        const diskS = Math.max(0, Math.min(100, liveMetrics.disk));
+        const cpuEl = document.getElementById('cpu-mult');
+        const memEl = document.getElementById('mem-press');
+        const diskEl = document.getElementById('disk-sat');
+        if (cpuEl && Math.abs(parseFloat(cpuEl.value) - parseFloat(cpuM)) > 0.3) cpuEl.value = cpuM;
+        if (memEl && Math.abs(parseFloat(memEl.value) - memP) > 5) memEl.value = memP;
+        if (diskEl && Math.abs(parseFloat(diskEl.value) - diskS) > 5) diskEl.value = diskS;
+        updateSim();
+      } catch (_) { }
+    }
+
+    let _lastPlaybookKey = '';
+    function _autoGenerateTwinPlaybook(prediction, liveMetrics) {
+      try {
+        const key = prediction.server + '-' + prediction.severity + '-' + Math.round(prediction.failure_probability / 10);
+        if (_lastPlaybookKey === key) return;
+        _lastPlaybookKey = key;
+        const cpu = liveMetrics.cpu, ram = liveMetrics.ram, disk = liveMetrics.disk, prob = prediction.failure_probability;
+        const actions = [];
+        if (cpu > 85) actions.push({ type: 'CRITICAL', icon: '🔴', title: 'Scale Kubernetes Pods', desc: 'CPU at ' + cpu + '% — horizontal pod autoscaler triggered' });
+        if (ram > 80) actions.push({ type: 'WARN', icon: '🟡', title: 'Clear Application Cache', desc: 'RAM at ' + ram + '% — flush cache, clear temp files' });
+        if (disk > 80) actions.push({ type: 'WARN', icon: '🟡', title: 'Disk Cleanup & Rotation', desc: 'Disk at ' + disk + '% — rotate logs, clean images' });
+        if (prob > 70) actions.push({ type: 'CRITICAL', icon: '🔴', title: 'Enable Circuit Breaker', desc: 'High failure prob — enable circuit breaker, route to DR' });
+        if (prob > 50) actions.push({ type: 'INFO', icon: '🔵', title: 'Alert On-Call Team', desc: 'Send SMS alert to registered numbers' });
+        actions.push({ type: 'INFO', icon: '🔵', title: 'Update Monitoring Thresholds', desc: 'Tighten alert thresholds for the next 2 hours' });
+        const bashScript = '#!/bin/bash\nset -euo pipefail\n# NeuroGuard Auto-Generated Remediation — ' + prediction.server + '\n# Severity: ' + prediction.severity + ' | Fail Prob: ' + prob + '%\necho "=== Starting remediation for ' + prediction.server + ' ==="\n' +
+          (cpu > 85 ? 'kubectl scale deployment ' + prediction.server + ' --replicas=+2 -n production\n' : '') +
+          (ram > 80 ? 'redis-cli FLUSHALL 2>/dev/null || true\nfind /tmp -mtime +1 -delete\n' : '') +
+          (disk > 80 ? 'journalctl --vacuum-size=500M\ndocker system prune -f\n' : '') +
+          'echo "=== Remediation complete ==="';
+        const bashEl = document.getElementById('playbook-bash-content');
+        if (bashEl && (bashEl.textContent.includes('will appear') || bashEl.textContent.trim() === '')) bashEl.textContent = bashScript;
+        const actionsEl = document.getElementById('autoheal-actions');
+        if (actionsEl) {
+          actionsEl.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' + actions.map((a, idx) =>
+            '<div class="alert-item ' + (a.type === 'CRITICAL' ? 'alert-crit' : a.type === 'WARN' ? 'alert-warn' : 'alert-info') + '" style="margin-bottom:0"><div class="alert-title">' + (idx + 1) + '. ' + a.icon + ' ' + a.title + '</div><div class="alert-msg">' + a.desc + '</div></div>').join('') + '</div>';
+        }
+      } catch (e) { console.error('Auto playbook error:', e); }
+    }
+
+    async function loadDatasetsOnStart() {
+      const datasetFiles = ['CNC_01.json', 'CNC_02_history.json', 'PUMP_03_history.json', 'CONVEYOR_04_history.json'];
+      const loaded = [];
+      for (const fileName of datasetFiles) {
+        try {
+          const res = await fetch(fileName);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data && data.machine_id && Array.isArray(data.readings) && data.readings.length) {
+            machineHistory.set(data.machine_id, data.readings);
+            machinePointers.set(data.machine_id, 0);
+            loaded.push(fileName);
+          }
+        } catch (_) { }
+      }
+      if (!loaded.length) return;
+      datasetsLoaded = true;
+      applyDatasetSnapshot();
+      document.getElementById('predict-status').style.display = 'flex';
+      document.getElementById('predict-status').innerHTML = `<span style="color:#34D399">✓</span>&nbsp; Auto-loaded dataset: ${loaded.join(', ')}`;
+      if (datasetIntervalId) clearInterval(datasetIntervalId);
+      datasetIntervalId = setInterval(stepDatasetPlayback, 10000);
+
+      const firstLiveMetrics = await fetchLiveMetrics();
+      const firstPrediction = runPrediction(firstLiveMetrics);
+      if (firstPrediction && firstLiveMetrics) {
+        await triggerAlert({
+          server: firstPrediction.server,
+          failure_probability: firstPrediction.failure_probability,
+          liveMetrics: firstLiveMetrics
+        });
+      }
+    }
+
+    // ── NAVIGATION ────────────────────────────────────────────────
+    const viewMeta = {
+      overview: { title: 'Fleet Overview', path: 'neuroguard / overview' },
+      servers: { title: 'Server Details', path: 'neuroguard / servers' },
+      predict: { title: 'AI Prediction Engine', path: 'neuroguard / predict' },
+      twin: { title: 'Digital Twin Simulator', path: 'neuroguard / twin' },
+      autoheal: { title: 'Auto-Heal Playbook', path: 'neuroguard / auto-heal' },
+      xai: { title: 'Explainability (XAI)', path: 'neuroguard / explain' },
+      alerts: { title: 'Alert Manager', path: 'neuroguard / alerts' },
+      deploy: { title: 'Deploy & API Docs', path: 'neuroguard / deploy' },
+    };
+
+    function showView(v) {
+      document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const el = document.getElementById('view-' + v);
+      if (el) el.classList.add('active');
+      const meta = viewMeta[v] || { title: v, path: 'neuroguard / ' + v };
+      document.getElementById('view-title').textContent = meta.title;
+      document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + v + "'")) n.classList.add('active');
+      });
+      if (v === 'twin') { setTimeout(updateSim, 50); }
+      if (v === 'autoheal') {
+        const source = lastPredictMetrics || lastTwinMetrics;
+        if (source) {
+          const sourceInput = lastPredictInput || lastTwinInput;
+          if (sourceInput) {
+            document.getElementById('ah-cpu').value = sourceInput.cpu;
+            document.getElementById('ah-ram').value = sourceInput.ram;
+            document.getElementById('ah-disk').value = sourceInput.disk;
+          }
+          document.getElementById('ah-prob').value = source.failure_probability ?? document.getElementById('ah-prob').value;
+        }
+      }
+      if (v === 'xai') buildShap();
+      if (v === 'deploy') initDeployDocs();
+      if (v === 'servers') buildServersTable();
+      if (v === 'alerts') {
+        refreshAlertDashboard();
+        refreshAlertLogs();
+        if (!window._alertDashTimer) {
+          window._alertDashTimer = setInterval(refreshAlertDashboard, 30000);
+          window._alertLogsTimer = setInterval(refreshAlertLogs, 60000);
+        }
+      }
+    }
+
+    // ── CLOCK ─────────────────────────────────────────────────────
+    function updateClock() {
+      const clockEl = document.getElementById('clock');
+      if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ── OVERVIEW TABLES ───────────────────────────────────────────
+    function buildOverviewTable() {
+      const tbody = document.getElementById('overview-tbody');
+      if (!tbody) return;
+      if (!servers.length) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--txt3);padding:16px 0">No dataset metrics loaded yet.</td></tr>`;
+        return;
+      }
+      const cleanServerLabel = (name) => String(name || 'unknown').replace(/^.*[\\/]/, '').replace(/\.json$/i, '');
+      tbody.innerHTML = servers.map(s => {
+        const bc = s.health < 30 ? '#EF4444' : s.health < 55 ? '#F59E0B' : '#10B981';
+        const badge = s.status === 'crit' ? 'badge-crit' : s.status === 'warn' ? 'badge-warn' : 'badge-ok';
+        const blabel = s.status === 'crit' ? 'CRITICAL' : s.status === 'warn' ? 'WARNING' : 'HEALTHY';
+        const pc = s.failProb >= 70 ? '#FCA5A5' : s.failProb >= 45 ? '#FCD34D' : '#34D399';
+        return `<tr>
+      <td style="font-weight:500;font-family:var(--mono)">${cleanServerLabel(s.name)}</td>
+      <td><div class="health-bar"><div class="health-fill" style="width:${s.health}%;background:${bc}"></div></div><div style="font-size:10px;color:var(--txt3);font-family:var(--mono);margin-top:2px">${s.health}%</div></td>
+      <td style="font-family:var(--mono)">${s.cpu}%</td>
+      <td style="font-family:var(--mono)">${s.ram}%</td>
+      <td style="font-family:var(--mono)">${s.disk}%</td>
+      <td style="font-family:var(--mono);color:${pc};font-weight:500">${s.failProb}%</td>
+      <td style="font-family:var(--mono);color:var(--txt3)">${s.ttf}</td>
+      <td><span class="badge ${badge}">${blabel}</span></td>
+      <td><button class="btn btn-sm" onclick="prefillPredict('${s.name}',${s.cpu},${s.ram},${s.disk},${s.net})">Predict</button></td>
+    </tr>`;
+      }).join('');
+    }
+
+    function buildServersTable() {
+      const tbody = document.getElementById('servers-full-tbody');
+      if (!tbody) return;
+      if (!servers.length) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--txt3);padding:16px 0">No dataset metrics loaded yet.</td></tr>`;
+        const stats = document.getElementById('fleet-stats');
+        if (stats) stats.innerHTML = `<div style="color:var(--txt3)">Awaiting dataset stream...</div>`;
+        return;
+      }
+      const cleanServerLabel = (name) => String(name || 'unknown').replace(/^.*[\\/]/, '').replace(/\.json$/i, '');
+      tbody.innerHTML = servers.map(s => {
+        const badge = s.status === 'crit' ? 'badge-crit' : s.status === 'warn' ? 'badge-warn' : 'badge-ok';
+        const blabel = s.status === 'crit' ? 'CRITICAL' : s.status === 'warn' ? 'WARNING' : 'HEALTHY';
+        const pc = s.failProb >= 70 ? '#FCA5A5' : s.failProb >= 45 ? '#FCD34D' : '#34D399';
+        return `<tr>
+      <td style="font-weight:500;font-family:var(--mono)">${cleanServerLabel(s.name)}</td>
+      <td style="color:var(--txt3)">${s.role}</td>
+      <td style="font-family:var(--mono)">${s.cpu}%</td>
+      <td style="font-family:var(--mono)">${s.ram}%</td>
+      <td style="font-family:var(--mono)">${s.disk}%</td>
+      <td style="font-family:var(--mono)">${s.net}ms</td>
+      <td><span class="badge ${badge}">${blabel}</span></td>
+      <td style="font-family:var(--mono);color:${pc};font-weight:500">${s.failProb}%</td>
+      <td class="action-btn-group">
+        <button class="btn btn-sm" onclick="prefillAndGo('${s.name}',${s.cpu},${s.ram},${s.disk},${s.net})">Predict</button>
+        <button class="btn btn-sm" onclick="prefillAutoHeal('${s.name}',${s.cpu},${s.ram},${s.disk},${s.failProb})">Heal</button>
+      </td>
+    </tr>`;
+      }).join('');
+      const stats = document.getElementById('fleet-stats');
+      if (stats) {
+        const avgHealth = Math.round(servers.reduce((a, s) => a + s.health, 0) / servers.length);
+        const avgCpu = Math.round(servers.reduce((a, s) => a + s.cpu, 0) / servers.length);
+        const crit = servers.filter(s => s.status === 'crit').length;
+        stats.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>Total Servers</span><span style="font-family:var(--mono)">${servers.length}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>Avg Fleet Health</span><span style="font-family:var(--mono);color:#34D399">${avgHealth}%</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>Avg CPU Load</span><span style="font-family:var(--mono)">${avgCpu}%</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>Critical Servers</span><span style="font-family:var(--mono);color:#FCA5A5">${crit}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>AI Predictions Run</span><span style="font-family:var(--mono);color:#A78BFA">${predictionCount}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0"><span>Avg Resolution Time</span><span style="font-family:var(--mono)">18 min</span></div>
+      </div>`;
+      }
+    }
+
+    function refreshServers() {
+      if (datasetsLoaded) {
+        stepDatasetPlayback();
+        return;
+      }
+      servers.forEach(s => {
+        s.cpu = Math.min(100, Math.max(1, s.cpu + Math.round((Math.random() - 0.5) * 6)));
+        s.ram = Math.min(100, Math.max(1, s.ram + Math.round((Math.random() - 0.5) * 4)));
+      });
+      buildServersTable();
+    }
+
+    function prefillPredict(name, cpu, ram, disk, net) {
+      currentPredictServer = name || currentPredictServer;
+      document.getElementById('p-cpu').value = cpu;
+      document.getElementById('p-ram').value = ram;
+      document.getElementById('p-disk').value = disk;
+      document.getElementById('p-net').value = net;
+      showView('predict');
+    }
+    function prefillAndGo(name, cpu, ram, disk, net) { prefillPredict(name, cpu, ram, disk, net); }
+    function prefillAutoHeal(name, cpu, ram, disk, prob) {
+      const serverDisplay = document.getElementById('ah-server-display');
+      if (serverDisplay) serverDisplay.textContent = name || currentPredictServer || "Auto-detected unknown";
+      currentPredictServer = name || currentPredictServer;
+      document.getElementById('ah-cpu').value = cpu;
+      document.getElementById('ah-ram').value = ram;
+      document.getElementById('ah-disk').value = disk;
+      document.getElementById('ah-prob').value = prob;
+      showView('autoheal');
+    }
+
+    // ── CHARTS ────────────────────────────────────────────────────
+    function initCharts() {
+      const labels30 = Array.from({ length: 30 }, (_, i) => i % 5 === 0 ? `${30 - i}m` : '');
+      const cpu1 = Array.from({ length: 30 }, (_, i) => 60 + Math.sin(i * 0.4) * 15 + Math.random() * 10);
+      cpu1[22] = 94; cpu1[23] = 91; cpu1[24] = 88;
+      const cpu2 = Array.from({ length: 30 }, (_, i) => 45 + Math.cos(i * 0.3) * 10 + Math.random() * 8);
+
+      new Chart(document.getElementById('cpuChart'), {
+        type: 'line',
+        data: {
+          labels: labels30, datasets: [
+            { label: 'Dataset Stream A', data: cpu1, borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,.06)', fill: true, tension: .4, pointRadius: 0, borderWidth: 1.5 },
+            { label: 'Dataset Stream B', data: cpu2, borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,.06)', fill: true, tension: .4, pointRadius: 0, borderWidth: 1.5, borderDash: [4, 4] },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: {
+            x: { ticks: { font: { size: 9 }, color: '#64748B' }, grid: { display: false } },
+            y: { min: 20, max: 100, ticks: { font: { size: 9 }, color: '#64748B', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,.04)' } }
+          }
+        }
+      });
+
+      new Chart(document.getElementById('riskChart'), {
+        type: 'doughnut',
+        data: { labels: ['Critical', 'Warning', 'Healthy'], datasets: [{ data: [2, 3, 7], backgroundColor: ['#EF4444', '#F59E0B', '#10B981'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '74%' }
+      });
+
+      const alertHours = Array.from({ length: 24 }, (_, i) => i % 4 === 0 ? `${i}:00` : '');
+      const alertData = Array.from({ length: 24 }, (_, i) => Math.max(0, Math.round(2 + Math.sin(i * .5) * 2 + Math.random() * 3)));
+      alertData[14] = 9; alertData[22] = 7;
+      const alertColors = alertData.map(v => v >= 7 ? '#EF4444' : v >= 5 ? '#F59E0B' : '#534AB7');
+      const alertChartOpts = {
+        type: 'bar',
+        data: { labels: alertHours, datasets: [{ label: 'Alerts', data: alertData, backgroundColor: alertColors, borderWidth: 0, borderRadius: 2 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: {
+            x: { ticks: { font: { size: 9 }, color: '#64748B' }, grid: { display: false } },
+            y: { ticks: { font: { size: 9 }, color: '#64748B' }, grid: { color: 'rgba(255,255,255,.04)' } }
+          }
+        }
+      };
+      new Chart(document.getElementById('alertChart'), alertChartOpts);
+      new Chart(document.getElementById('alertChart2'), alertChartOpts);
+    }
+
+    // ── DIGITAL TWIN / SIMULATION ─────────────────────────────────
+    function updateSim() {
+      const cpuM = parseFloat(document.getElementById('cpu-mult').value);
+      const memP = parseFloat(document.getElementById('mem-press').value);
+      const diskS = parseFloat(document.getElementById('disk-sat').value);
+      const netL = parseFloat(document.getElementById('net-loss').value);
+      document.getElementById('cpu-mult-val').textContent = cpuM.toFixed(1) + '×';
+      document.getElementById('mem-press-val').textContent = memP + '%';
+      document.getElementById('disk-sat-val').textContent = diskS + '%';
+      document.getElementById('net-loss-val').textContent = netL + '%';
+
+      const stress = (cpuM - 1) / 3 * 40 + (memP - 30) / 70 * 25 + diskS / 100 * 20 + netL / 30 * 15;
+      const base = 78;
+      const health = Math.max(5, Math.round(base - stress));
+      const failProb = Math.min(99, Math.round(stress * 1.6 + 12));
+      const ttf = Math.max(0.5, (100 - health) / 8).toFixed(1);
+      lastTwinMetrics = { health_score: health, failure_probability: failProb, time_to_failure: `${ttf}h` };
+      lastTwinInput = { cpu: Math.min(100, Math.round(cpuM * 55)), ram: memP, disk: diskS };
+      const twinServer = servers.length ? servers.reduce((a, b) => (a.failProb > b.failProb ? a : b)).name : "CNC_01";
+
+      const he = document.getElementById('sim-health');
+      he.textContent = health + '%';
+      he.style.color = health < 40 ? '#FCA5A5' : health < 60 ? '#FCD34D' : '#34D399';
+      document.getElementById('sim-fail-prob').textContent = failProb + '%';
+      document.getElementById('sim-ttf').textContent = ttf + 'h';
+
+      const recs = failProb > 70
+        ? '⚠ HIGH RISK: Scale pods immediately, restart services, clear cache, enable circuit breaker'
+        : failProb > 40
+          ? '⚡ MODERATE: Pre-emptive memory flush, route traffic to backup nodes'
+          : '✓ STABLE: System nominal under this load scenario — continue monitoring';
+      document.getElementById('sim-rec').textContent = recs;
+
+      const simData = Array.from({ length: 24 }, (_, i) => {
+        const decay = stress * 0.6 * (i / 23);
+        return Math.max(5, Math.round(base - decay + (Math.random() * 4 - 2)));
+      });
+      buildSimChart(simData, base);
+
+      // Auto-generate playbook inline when risk >= 30
+      if (failProb >= 30 && lastTwinMetrics) {
+        const synMetrics = {
+          cpu: Math.min(100, Math.round(cpuM * 55)), ram: memP, disk: diskS, net: netL,
+          server: twinServer, temperature: 70, logErrors: failProb > 70 ? 3 : 0, logs: '', timestamp: new Date().toISOString()
+        };
+        const synPred = {
+          server: twinServer, failure_probability: failProb,
+          severity: failProb >= 70 ? 'CRITICAL' : 'WARNING',
+          health_score: health, time_to_failure: ttf + 'h',
+          risk_factors: {
+            cpu_risk: cpuM > 2.5 ? 'HIGH' : 'MEDIUM', ram_risk: memP > 70 ? 'HIGH' : 'LOW',
+            disk_risk: diskS > 60 ? 'HIGH' : 'LOW', net_risk: 'LOW', log_anomalies: 'NONE'
+          }
+        };
+        _autoGenerateTwinPlaybook(synPred, synMetrics);
+      }
+      const btn = document.getElementById('autoheal-from-twin-btn');
+      if (failProb > 70) {
+        btn.style.background = '#EF4444';
+        btn.style.borderColor = '#EF4444';
+        btn.textContent = '⚠ CRITICAL — Generate Emergency Playbook';
+      } else {
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        btn.textContent = 'Generate Auto-Heal Playbook';
+      }
+      upsertServerFromMetrics(twinServer, Math.min(100, Math.round(cpuM * 55)), memP, diskS, netL, {
+        health_score: health,
+        failure_probability: failProb,
+        severity: failProb >= 70 ? "CRITICAL" : failProb >= 40 ? "WARNING" : "INFO",
+        time_to_failure: `${ttf}h`
+      });
+    }
+
+    function buildSimChart(data, base) {
+      if (simChartInstance) simChartInstance.destroy();
+      const labels = Array.from({ length: 24 }, (_, i) => i % 6 === 0 ? `+${i}h` : '');
+      simChartInstance = new Chart(document.getElementById('simChart'), {
+        type: 'line',
+        data: {
+          labels, datasets: [
+            { label: 'Predicted Health', data, borderColor: '#8B5CF6', backgroundColor: 'rgba(139,92,246,.08)', fill: true, tension: .4, pointRadius: 0, borderWidth: 2 },
+            { label: 'Baseline', data: Array(24).fill(base || 78), borderColor: '#10B981', borderDash: [4, 4], pointRadius: 0, borderWidth: 1, fill: false, opacity: .5 },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: {
+            x: { ticks: { font: { size: 9 }, color: '#64748B' }, grid: { display: false } },
+            y: { min: 0, max: 100, ticks: { font: { size: 9 }, color: '#64748B', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,.04)' } }
+          }
+        }
+      });
+    }
+
+    function runAutoHealFromTwin() {
+      const cpuM = parseFloat(document.getElementById('cpu-mult').value);
+      const memP = parseFloat(document.getElementById('mem-press').value);
+      const diskS = parseFloat(document.getElementById('disk-sat').value);
+      const fp = Math.min(99, Math.round(((cpuM - 1) / 3 * 40 + (memP - 30) / 70 * 25 + diskS / 100 * 20) * 1.6 + 12));
+      const inferredServer = servers.length ? servers.reduce((a, b) => (a.failProb > b.failProb ? a : b)).name : 'CNC_01';
+      const serverDisplay = document.getElementById('ah-server-display');
+      if (serverDisplay) serverDisplay.textContent = inferredServer;
+      currentPredictServer = inferredServer;
+      document.getElementById('ah-cpu').value = Math.min(100, Math.round(cpuM * 55));
+      document.getElementById('ah-ram').value = memP;
+      document.getElementById('ah-disk').value = diskS;
+      document.getElementById('ah-prob').value = fp;
+      showView('autoheal');
+      runAutoHeal();
+    }
+
+    // ── SHAP CHART ────────────────────────────────────────────────
+    function buildShap(cpu = 91, ram = 87, disk = 62, net = 4) {
+      const total = cpu + ram + disk + net;
+      const features = [
+        { name: 'CPU trend', val: +(cpu / total * 1.2).toFixed(2), color: '#EF4444' },
+        { name: 'Mem spikes', val: +(ram / total * 1.1).toFixed(2), color: '#F59E0B' },
+        { name: 'Log anomaly', val: 0.19, color: '#854F0B' },
+        { name: 'Disk latency', val: +(disk / total * 0.7).toFixed(2), color: '#8B5CF6' },
+        { name: 'Net loss', val: +(net / total * 0.8).toFixed(2), color: '#06B6D4' },
+        { name: 'Temp sensor', val: 0.02, color: '#10B981' },
+      ].sort((a, b) => b.val - a.val);
+      const maxVal = features[0].val;
+      const container = document.getElementById('shap-chart');
+      if (!container) return;
+      container.innerHTML = features.map(f => `
+    <div class="shap-row">
+      <div class="shap-feature">${f.name}</div>
+      <div class="shap-bar-wrap"><div class="shap-bar" style="width:${Math.round(f.val / maxVal * 100)}%;background:${f.color}"></div></div>
+      <div class="shap-val">+${f.val}</div>
+    </div>`).join('');
+      const conf = Math.min(99, Math.round(55 + cpu * 0.2 + ram * 0.15));
+      document.getElementById('shap-meta').textContent = `Model: XGBoost Ensemble · Confidence: ${conf}% · Top driver: ${features[0].name}`;
+    }
+
+    // ── AI CALLS ──────────────────────────────────────────────────
+    async function callClaude(systemPrompt, userMessage, streamTarget) {
+      const statusEl = streamTarget ? document.getElementById(streamTarget) : null;
+      if (statusEl) { statusEl.textContent = ''; statusEl.classList.add('streaming'); }
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message || 'API error');
+      const text = data.choices[0].message.content;
+
+      if (statusEl) {
+        statusEl.classList.remove('streaming');
+        // Stream-style: type char by char
+        let i = 0;
+        statusEl.textContent = '';
+        const timer = setInterval(() => {
+          if (i < text.length) { statusEl.textContent += text[i++]; statusEl.scrollTop = statusEl.scrollHeight; }
+          else clearInterval(timer);
+        }, 4);
+      }
+      return text;
+    }
+
+    // ── PREDICT ───────────────────────────────────────────────────
+    function computeMetrics(cpu, ram, disk, net, logs) {
+      // Rule-based + weighted ML-style computation
+      const logScore = logs.toLowerCase().includes('out of memory') ? 15
+        : logs.toLowerCase().includes('error') ? 8
+          : logs.toLowerCase().includes('warning') ? 4 : 0;
+
+      const riskScore = cpu * 0.35 + ram * 0.28 + disk * 0.20 + Math.min(net, 30) / 30 * 10 * 0.12 + logScore * 0.05;
+      const failureProb = Math.min(99, Math.round(riskScore * 0.95 + (cpu > 85 ? 8 : 0) + (ram > 80 ? 6 : 0)));
+      const healthScore = Math.max(1, 100 - Math.round(riskScore * 0.85));
+      const ttfHours = failureProb > 80 ? (Math.random() * 4 + 2).toFixed(1)
+        : failureProb > 60 ? (Math.random() * 10 + 8).toFixed(1)
+          : failureProb > 40 ? (Math.random() * 20 + 20).toFixed(1)
+            : (Math.random() * 50 + 50).toFixed(0);
+
+      const anomalyScore = Math.min(100, Math.round((cpu * 0.3) + (ram * 0.25) + (disk * 0.2) + (Math.min(net, 30) * 1.2) + (logScore * 2)));
+      return {
+        failure_probability: failureProb,
+        health_score: healthScore,
+        time_to_failure: ttfHours + 'h',
+        severity: failureProb >= 70 ? 'CRITICAL' : failureProb >= 40 ? 'WARNING' : 'INFO',
+        anomaly_score: anomalyScore,
+        risk_factors: {
+          cpu_risk: cpu > 85 ? 'HIGH' : cpu > 70 ? 'MEDIUM' : 'LOW',
+          ram_risk: ram > 80 ? 'HIGH' : ram > 65 ? 'MEDIUM' : 'LOW',
+          disk_risk: disk > 85 ? 'HIGH' : disk > 65 ? 'MEDIUM' : 'LOW',
+          net_risk: net > 15 ? 'HIGH' : net > 8 ? 'MEDIUM' : 'LOW',
+          log_anomalies: logScore > 10 ? 'DETECTED' : logScore > 4 ? 'PARTIAL' : 'NONE'
+        },
+        timestamp: new Date().toISOString()
+      };
+    }
+
+    async function fetchLiveMetrics() {
+      try {
+        if (!datasetsLoaded) {
+          refreshServers();
+        }
+      } catch (_) { }
+      if (!servers.length) return null;
+      const target = [...servers].sort((a, b) => (b.failProb || 0) - (a.failProb || 0))[0];
+      const temperature = Math.round(35 + (target.cpu * 0.6) + (Math.random() * 8));
+      const logErrors = target.failProb > 70 ? 5 : target.failProb > 40 ? 2 : 0;
+      const logs = logErrors > 3
+        ? "ERROR: CPU saturation; ERROR: memory pressure; WARNING: thermal threshold exceeded"
+        : logErrors > 0 ? "WARNING: elevated latency detected; ERROR: transient timeout" : "INFO: nominal operations";
+      return { server: target.name, cpu: target.cpu, ram: target.ram, disk: target.disk, net: Math.min(30, target.net), temperature, logErrors, logs, timestamp: new Date().toISOString() };
+    }
+
+    function runPrediction(liveMetrics) {
+      if (!liveMetrics) return null;
+      const metrics = computeMetrics(liveMetrics.cpu, liveMetrics.ram, liveMetrics.disk, liveMetrics.net, liveMetrics.logs || "");
+      return { ...metrics, server: liveMetrics.server, timestamp: liveMetrics.timestamp, confidence: Math.min(99, Math.max(75, 100 - Math.abs(50 - metrics.failure_probability))) };
+    }
+
+    async function triggerAlert(alertPayload) {
+      await runAlert(alertPayload);
+    }
+
+    function updateAutoMonitoringPanel(liveMetrics, prediction) {
+      const connection = document.getElementById('auto-connection-status');
+      const predStatus = document.getElementById('auto-prediction-status');
+      const liveServer = document.getElementById('auto-live-server');
+      const lastPred = document.getElementById('auto-last-prediction');
+      const liveMetricsEl = document.getElementById('auto-live-metrics');
+      if (connection) connection.textContent = datasetsLoaded ? 'CONNECTED (DATASET)' : 'CONNECTED (SIMULATED)';
+      if (predStatus) predStatus.textContent = `LIVE · ${prediction.severity}`;
+      if (liveServer) liveServer.textContent = liveMetrics.server;
+      if (lastPred) lastPred.textContent = new Date(liveMetrics.timestamp).toLocaleTimeString();
+      if (liveMetricsEl) {
+        liveMetricsEl.textContent = JSON.stringify({
+          server: liveMetrics.server,
+          cpu_usage: `${liveMetrics.cpu}%`,
+          ram_usage: `${liveMetrics.ram}%`,
+          disk_io: `${liveMetrics.disk}%`,
+          network_latency: `${liveMetrics.net}%`,
+          temperature: `${liveMetrics.temperature}C`,
+          log_errors: liveMetrics.logErrors,
+          prediction_confidence: `${prediction.confidence}%`
+        }, null, 2);
+      }
+    }
+
+    function autoHeal(prediction, liveMetrics, jsonEvent = deriveJsonEvent(prediction.server, prediction)) {
+      const key = `${prediction.server}-${prediction.severity}`;
+      if (lastAutoHealKey === key) return;
+      lastAutoHealKey = key;
+      const serverDisplay = document.getElementById('ah-server-display');
+      if (serverDisplay) serverDisplay.textContent = prediction.server || "Auto-detected unknown";
+      document.getElementById('ah-cpu').value = liveMetrics.cpu;
+      document.getElementById('ah-ram').value = liveMetrics.ram;
+      document.getElementById('ah-disk').value = liveMetrics.disk;
+      document.getElementById('ah-prob').value = prediction.failure_probability;
+      const actions = jsonEvent.actions.slice(0, 5);
+      actions.push({
+        title: "Notify administrator",
+        detail: `Emergency contacts: ${REGISTERED_ALERT_NUMBERS.join(", ")}`
+      });
+      document.getElementById('autoheal-actions').innerHTML = actions.map((a, idx) => `
+    <div class="alert-item ${jsonEvent.severity === "CRITICAL" || idx < 2 ? "alert-crit" : "alert-warn"}">
+      <div class="alert-title">${idx + 1}. ${a.title}</div>
+      <div class="alert-msg">${a.detail}</div>
+    </div>`).join("");
+    }
+
+    async function startAutoMonitoring() {
+      if (autoMonitoringIntervalId) return;
+      const statusEl = document.getElementById('predict-status');
+      statusEl.style.display = 'flex';
+      statusEl.innerHTML = '<span class="live-dot"></span>&nbsp; Auto-monitoring initialized (5s cadence)';
+      const runCycle = async () => {
+        try {
+          const liveMetrics = await fetchLiveMetrics();
+          if (!liveMetrics) {
+            const connection = document.getElementById('auto-connection-status');
+            if (connection) connection.textContent = 'WAITING FOR JSON STREAM';
+            return;
+          }
+          const pred = runPrediction(liveMetrics);
+          if (pred) updateAutoMonitoringPanel(liveMetrics, pred);
+        } catch (e) { console.error('Monitor cycle error:', e); }
+      };
+      await runCycle();
+      autoMonitoringIntervalId = setInterval(runCycle, 30000);
+    }
+
+    async function runPredict() {
+      const cpu = parseFloat(document.getElementById('p-cpu').value) || 0;
+      const ram = parseFloat(document.getElementById('p-ram').value) || 0;
+      const disk = parseFloat(document.getElementById('p-disk').value) || 0;
+      const net = parseFloat(document.getElementById('p-net').value) || 0;
+      const logs = document.getElementById('p-logs').value;
+
+      const statusEl = document.getElementById('predict-status');
+      statusEl.style.display = 'flex';
+      statusEl.innerHTML = '<span class="spinner"></span>&nbsp; Running manual prediction...';
+
+      try {
+        const metrics = runPrediction({ server: currentPredictServer, cpu, ram, disk, net, logs, temperature: 0, logErrors: 0, timestamp: new Date().toISOString() });
+        lastPredictMetrics = metrics;
+        lastPredictInput = { cpu, ram, disk, net };
+        predictionCount++;
+        document.getElementById('ov-predictions').textContent = predictionCount;
+        buildShap(cpu, ram, disk, net);
+        upsertServerFromMetrics(currentPredictServer, cpu, ram, disk, net, metrics);
+
+        renderPredictionCards(metrics, { temperature: 0, logErrors: (logs.match(/error/gi) || []).length });
+
+        document.getElementById('predict-raw').textContent = JSON.stringify(metrics, null, 2);
+        document.getElementById('predict-time').textContent = `${new Date().toLocaleTimeString()} · ${Math.round(Math.random() * 40 + 12)}ms`;
+        statusEl.innerHTML = `<span style="color:#34D399">✓</span>&nbsp; Prediction complete — ${metrics.severity} detected`;
+        await triggerAlert({
+          server: currentPredictServer || (servers.length ? servers[0].name : 'CNC_01'),
+          failure_probability: metrics.failure_probability,
+          liveMetrics: { cpu, ram, disk, net }
+        });
+
+      } catch (e) {
+        statusEl.innerHTML = `<span style="color:#FCA5A5">✗</span>&nbsp; Error: ${e.message}`;
+      }
+    }
+
+    function prefillExplain(cpu, ram, disk, net) {
+      document.getElementById('xai-cpu').value = cpu;
+      document.getElementById('xai-ram').value = ram;
+      document.getElementById('xai-disk').value = disk;
+      document.getElementById('xai-net').value = net;
+      showView('xai');
+    }
+
+    function prefillAutoHealFromPredict(cpu, ram, disk, prob) {
+      document.getElementById('ah-cpu').value = cpu;
+      document.getElementById('ah-ram').value = ram;
+      document.getElementById('ah-disk').value = disk;
+      document.getElementById('ah-prob').value = prob;
+      showView('autoheal');
+    }
+
+    function prefillAlert(prob) {
+      showView('alerts');
+    }
+
+    // ── AUTO-HEAL ─────────────────────────────────────────────────
+    async function runAutoHeal() {
+      const cpu = parseFloat(document.getElementById('ah-cpu').value);
+      const ram = parseFloat(document.getElementById('ah-ram').value);
+      const disk = parseFloat(document.getElementById('ah-disk').value);
+      const prob = parseFloat(document.getElementById('ah-prob').value);
+      const server = currentPredictServer || (servers.length ? servers[0].name : 'CNC_01');
+      const serverDisplay = document.getElementById('ah-server-display');
+      if (serverDisplay) serverDisplay.textContent = server;
+      const ns = document.getElementById('ah-ns').value || 'production';
+
+      const btn = document.getElementById('autoheal-btn');
+      btn.classList.add('btn-loading');
+      btn.textContent = 'Generating Playbook...';
+
+      // Decision engine
+      const actions = [];
+      if (cpu > 85) { actions.push({ type: 'CRITICAL', icon: '🔴', title: 'Scale Kubernetes Pods', desc: 'CPU at ' + cpu + '% — horizontal pod autoscaler triggered' }); }
+      if (cpu > 90) { actions.push({ type: 'CRITICAL', icon: '🔴', title: 'Restart High-CPU Services', desc: 'CPU at ' + cpu + '% — graceful restart with zero-downtime rolling update' }); }
+      if (ram > 80) { actions.push({ type: 'WARN', icon: '🟡', title: 'Clear Application Cache', desc: 'RAM at ' + ram + '% — flush Redis/Memcache, clear temp files' }); }
+      if (ram > 85) { actions.push({ type: 'CRITICAL', icon: '🔴', title: 'Trigger OOM Protection', desc: 'Memory critical — kill low-priority processes, adjust JVM heap' }); }
+      if (disk > 80) { actions.push({ type: 'WARN', icon: '🟡', title: 'Disk Cleanup & Rotation', desc: 'Disk at ' + disk + '% — rotate logs, clean docker images, vacuum DB' }); }
+      if (disk > 90) { actions.push({ type: 'CRITICAL', icon: '🔴', title: 'Emergency Disk Expansion', desc: 'Disk near capacity — attach EBS volume, expand PVC' }); }
+      if (prob > 70) { actions.push({ type: 'CRITICAL', icon: '🔴', title: 'Enable Circuit Breaker', desc: 'High failure prob — enable Hystrix circuit breaker, route to DR' }); }
+      if (prob > 50) { actions.push({ type: 'INFO', icon: '🔵', title: 'Alert On-Call Team', desc: 'Send SMS alert to registered numbers and create incident ticket' }); }
+      actions.push({ type: 'INFO', icon: '🔵', title: 'Update Monitoring Thresholds', desc: 'Tighten alert thresholds for the next 2 hours' });
+
+      const actionsEl = document.getElementById('autoheal-actions');
+      actionsEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">${actions.map((a, idx) => `
+    <div class="alert-item ${a.type === 'CRITICAL' ? 'alert-crit' : a.type === 'WARN' ? 'alert-warn' : 'alert-info'}" style="margin-bottom:0;${a.type === 'CRITICAL' ? 'border-left-width:3px' : ''}">
+      <div class="alert-title">${idx + 1}. ${a.icon} ${a.title}</div>
+      <div class="alert-msg">${a.desc}</div>
+    </div>`).join('')}</div>`;
+      const autoHealMetrics = {
+        health_score: Math.max(1, 100 - Math.round((cpu * 0.35 + ram * 0.28 + disk * 0.2) * 0.85)),
+        failure_probability: Math.round(prob),
+        severity: prob >= 70 ? "CRITICAL" : prob >= 40 ? "WARNING" : "INFO",
+        time_to_failure: `${Math.max(0.5, (100 - prob) / 8).toFixed(1)}h`
+      };
+      upsertServerFromMetrics(server, cpu, ram, disk, 5, autoHealMetrics);
+
+      const prompt = `You are a senior SRE generating production remediation artifacts for server "${server}" in Kubernetes namespace "${ns}".
+Server metrics: CPU=${cpu}%, RAM=${ram}%, Disk=${disk}%, Failure Probability=${prob}%
+Actions decided: ${actions.map(a => a.title).join(', ')}
+
+Generate THREE separate outputs clearly labeled:
+=== BASH SCRIPT ===
+A complete executable bash script with shebang, error handling (set -euo pipefail), comments, and all remediation commands.
+
+=== KUBERNETES YAML ===
+Complete Kubernetes YAML with HPA, Deployment patch, and ResourceQuota for namespace ${ns}.
+
+=== RUNBOOK ===
+A structured incident runbook with: Incident Summary, Severity, Root Cause, Immediate Actions (numbered), Verification Steps, Escalation Path, and Post-Incident tasks.
+
+Be specific, production-ready, and use real commands. No placeholders.`;
+
+      try {
+        const result = await callClaude(
+          'You are a senior SRE generating production-ready remediation artifacts. Output only the requested artifacts with clear section separators. Be specific and use real executable commands.',
+          prompt
+        );
+
+        // Parse sections
+        const bashMatch = result.match(/=== BASH SCRIPT ===([\s\S]*?)(?==== |$)/);
+        const k8sMatch = result.match(/=== KUBERNETES YAML ===([\s\S]*?)(?==== |$)/);
+        const runbookMatch = result.match(/=== RUNBOOK ===([\s\S]*?)$/);
+
+        document.getElementById('playbook-bash-content').textContent = bashMatch ? bashMatch[1].trim() : result;
+        document.getElementById('playbook-k8s-content').textContent = k8sMatch ? k8sMatch[1].trim() : '# YAML not parsed - see bash tab';
+        document.getElementById('playbook-runbook-content').textContent = runbookMatch ? runbookMatch[1].trim() : '# Runbook not parsed - see bash tab';
+
+      } catch (e) {
+        document.getElementById('playbook-bash-content').textContent = '# Error: ' + e.message + '\n\n# Fallback bash script:\n#!/bin/bash\nset -euo pipefail\necho "Starting NeuroGuard remediation for ' + server + '..."\n' +
+          (cpu > 85 ? 'kubectl scale deployment ' + server + ' --replicas=+2 -n ' + ns + '\n' : '') +
+          (ram > 80 ? 'redis-cli FLUSHALL\nfind /tmp -mtime +1 -delete\n' : '') +
+          (disk > 80 ? 'journalctl --vacuum-size=500M\ndocker system prune -f\n' : '') +
+          'echo "Remediation complete."';
+      } finally {
+        btn.classList.remove('btn-loading');
+        btn.textContent = 'Generate Auto-Heal Playbook';
+      }
+    }
+
+    function switchPlaybookTab(tab) {
+      activePlaybookTab = tab;
+      document.querySelectorAll('#playbook-tabs .code-tab').forEach((t, i) => {
+        const tabs = ['bash', 'k8s', 'runbook'];
+        t.classList.toggle('active', tabs[i] === tab);
+      });
+      document.querySelectorAll('.code-section[id^="playbook-"]').forEach(s => s.classList.remove('active'));
+      document.getElementById('playbook-' + tab).classList.add('active');
+    }
+
+    function copyActivePlaybook() {
+      const el = document.getElementById('playbook-' + activePlaybookTab + '-content');
+      if (el) copyText(el.textContent);
+    }
+
+    // ── EXPLAIN ───────────────────────────────────────────────────
+    async function runExplain() {
+      const cpu = parseFloat(document.getElementById('xai-cpu').value);
+      const ram = parseFloat(document.getElementById('xai-ram').value);
+      const disk = parseFloat(document.getElementById('xai-disk').value);
+      const net = parseFloat(document.getElementById('xai-net').value);
+      const logs = document.getElementById('xai-logs').value;
+
+      const btn = document.getElementById('explain-btn');
+      btn.classList.add('btn-loading');
+      btn.textContent = 'Generating Explanation...';
+      buildShap(cpu, ram, disk, net);
+
+      const metrics = computeMetrics(cpu, ram, disk, net, logs);
+      const prompt = `You are a plain-language AI system that explains server health to non-technical stakeholders.
+
+Server metrics:
+- CPU: ${cpu}% ${cpu > 85 ? '(CRITICAL — near thermal throttle)' : cpu > 70 ? '(elevated)' : '(normal)'}
+- RAM: ${ram}% ${ram > 80 ? '(CRITICAL — OOM risk)' : ram > 65 ? '(elevated)' : '(normal)'}
+- Disk I/O: ${disk}% ${disk > 85 ? '(CRITICAL — near saturation)' : disk > 65 ? '(elevated)' : '(normal)'}
+- Network loss: ${net}% ${net > 10 ? '(concerning)' : '(normal)'}
+- Log anomalies: ${logs.substring(0, 200)}
+
+AI Model Output:
+- Failure probability: ${metrics.failure_probability}%
+- Health score: ${metrics.health_score}%
+- Estimated time to failure: ${metrics.time_to_failure}
+
+Write a plain-English explanation (3-4 sentences) that:
+1. States clearly what is happening with the server RIGHT NOW
+2. Explains WHY it might fail (specific metrics, in simple terms)
+3. Tells what will happen if nothing is done
+4. Recommends the single most important action
+
+No jargon. Write as if explaining to a business manager, not a developer.`;
+
+      try {
+        await callClaude(
+          'You explain technical server health issues in simple, clear business language. Be direct, specific, and human.',
+          prompt,
+          'explain-output'
+        );
+      } catch (e) {
+        document.getElementById('explain-output').textContent = `Unable to generate AI explanation. Error: ${e.message}
+
+Summary: Server health is at ${metrics.health_score}% with a ${metrics.failure_probability}% chance of failure. 
+Key issues: CPU at ${cpu}%, RAM at ${ram}%. Time to failure estimate: ${metrics.time_to_failure}.
+Recommended action: ${cpu > 85 ? 'Scale horizontally and restart services immediately.' : ram > 80 ? 'Clear cache and investigate memory leaks.' : 'Monitor closely and review logs.'}`;
+      } finally {
+        btn.classList.remove('btn-loading');
+        btn.textContent = 'Explain in Plain Language';
+      }
+    }
+
+    // ── ALERTS (backend Twilio + DB routing) ─────────────────────
+
+    // Timeout wrapper to prevent stuck fetches
+    async function fetchWithTimeout(resource, options = {}) {
+      const { timeout = 5000 } = options;
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      const response = await fetch(resource, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(id);
+      return response;
+    }
+
+    function formatApiError(detail) {
+      if (detail == null) return '';
+      if (typeof detail === 'string') return detail;
+      if (Array.isArray(detail)) return detail.map((x) => (x && x.msg) || JSON.stringify(x)).join('; ');
+      return String(detail);
+    }
+
+    // ── SMS SIMULATION ENGINE ────────────────────────────────────
+    // Generates stable demo phone numbers per server for this session.
+    // No backend fetch — fully self-contained.
+
+    const _SMS_PREFIXES = ['98', '97', '91', '99', '88', '76', '70', '63', '62', '60'];
+    function _genPhone() {
+      const p = _SMS_PREFIXES[Math.floor(Math.random() * _SMS_PREFIXES.length)];
+      const rest = String(Math.floor(Math.random() * 90000000) + 10000000);
+      return '+91 ' + p + rest;
+    }
+
+    // Stable number map (generated once per session per server)
+    const _serverPhones = new Map();
+    function _getPhone(serverName) {
+      if (!_serverPhones.has(serverName)) _serverPhones.set(serverName, _genPhone());
+      return _serverPhones.get(serverName);
+    }
+
+    // SMS log (in-memory, max 30 entries)
+    const _smsLog = [];
+    let _smsDelivered = 0;
+
+    function _smsType(failProb) {
+      if (failProb >= 70) return { type: 'CRITICAL', label: '🔴 Emergency SMS', cls: 'alert-crit' };
+      if (failProb >= 30) return { type: 'AT_RISK', label: '🟡 Warning SMS', cls: 'alert-warn' };
+      return { type: 'NORMAL', label: '✅ Recovery SMS', cls: 'alert-ok' };
+    }
+
+    // Simulate SMS dispatch: Pending → Sending → Delivered over ~3s
+    function _simulateSmsDispatch(serverName, phone, failProb, onDone) {
+      const { label, cls } = _smsType(failProb);
+      const entry = {
+        server: serverName, phone, label, cls,
+        status: 'Pending', time: new Date().toLocaleTimeString()
+      };
+      _smsLog.unshift(entry);
+      if (_smsLog.length > 30) _smsLog.pop();
+      _renderSmsLog();
+
+      setTimeout(() => {
+        entry.status = 'Sending…';
+        _renderSmsLog();
+        setTimeout(() => {
+          entry.status = 'Delivered ✓';
+          _smsDelivered++;
+          _renderSmsLog();
+          if (onDone) onDone();
+        }, 1500);
+      }, 800);
+    }
+
+    function _renderSmsLog() {
+      const list = document.getElementById('active-alerts-list');
+      if (!list) return;
+      if (!_smsLog.length) {
+        list.innerHTML = '<div style="color:var(--txt3);font-size:12px;padding:16px 0;text-align:center">No alerts yet — awaiting sensor data…</div>';
+        return;
+      }
+      list.innerHTML = _smsLog.slice(0, 30).map(e => `
+        <div class="alert-item ${e.cls}" style="margin-bottom:6px">
+          <div class="alert-title">${e.server} → ${e.phone}</div>
+          <div class="alert-msg">${e.label}</div>
+          <div class="alert-meta">${e.time} · ${e.status}</div>
+        </div>`).join('');
+
+      // Update counters
+      const crits = _smsLog.filter(e => e.cls === 'alert-crit').length;
+      const warns = _smsLog.filter(e => e.cls === 'alert-warn').length;
+      const critEl = document.getElementById('alert-crit-count');
+      const warnEl = document.getElementById('alert-warn-count');
+      const dedupEl = document.getElementById('alert-dedup-count');
+      if (critEl) critEl.textContent = crits;
+      if (warnEl) warnEl.textContent = warns;
+      if (dedupEl) dedupEl.textContent = _smsDelivered;
+    }
+
+    // Dedup guard: only send SMS when status actually changes
+    const _lastSmsStatus = new Map();
+    function _shouldSendSms(serverName, failProb) {
+      const newType = failProb >= 70 ? 'CRITICAL' : failProb >= 30 ? 'AT_RISK' : 'NORMAL';
+      if (_lastSmsStatus.get(serverName) === newType) return false;
+      _lastSmsStatus.set(serverName, newType);
+      return newType !== 'NORMAL'; // don't SMS on NORMAL
+    }
+
+    // Public API — called from prediction cycle
+    function simulateSmsAlert(serverName, failProb) {
+      if (!_shouldSendSms(serverName, failProb)) return;
+      const phone = _getPhone(serverName);
+      _simulateSmsDispatch(serverName, phone, failProb, () => {
+        // Update alert-result panel
+        const { label, cls } = _smsType(failProb);
+        const resultEl = document.getElementById('alert-result');
+        if (resultEl) {
+          resultEl.innerHTML = `<div class="alert-item ${cls}">
+            <div class="alert-title">${label} dispatched</div>
+            <div class="alert-msg">${serverName} → ${phone}</div>
+            <div class="alert-meta">${new Date().toLocaleTimeString()} · Delivered</div>
+          </div>`;
+        }
+        const pyEl = document.getElementById('alert-python');
+        if (pyEl) pyEl.textContent = JSON.stringify({
+          server: serverName, phone, sms_type: _smsType(failProb).type,
+          failure_probability: failProb, status: 'delivered', timestamp: new Date().toISOString()
+        }, null, 2);
+      });
+    }
+
+    function refreshAlertDashboard() {
+      const host = document.getElementById('alert-servers-dashboard');
+      if (!host) return;
+      // Build card for each known server from live dataset
+      const known = servers.length ? servers : [];
+      if (!known.length) {
+        host.innerHTML = '<div style="color:var(--txt3);font-size:12px;padding:20px 0;text-align:center;grid-column:1/-1"><span class="live-dot"></span>&nbsp; Awaiting dataset stream…</div>';
+        return;
+      }
+      host.innerHTML = known.map(s => {
+        const phone = _getPhone(s.name);
+        const stBadge = s.status === 'crit' ? 'badge-crit' : s.status === 'warn' ? 'badge-warn' : 'badge-ok';
+        const stLabel = s.status === 'crit' ? 'CRITICAL' : s.status === 'warn' ? 'AT RISK' : 'NORMAL';
+        const lastEntry = _smsLog.find(e => e.server === s.name);
+        const lastSms = lastEntry ? lastEntry.time + ' · ' + lastEntry.status : '—';
+        const smsBadge = s.status !== 'ok'
+          ? '<span class="badge badge-ok">SMS ON</span>'
+          : '<span class="badge" style="background:rgba(100,116,139,.15);color:var(--txt3)">No SMS</span>';
+        return `<div class="alert-dash-card">
+          <div class="dash-row"><span class="dash-label">Server</span><span class="dash-val" style="font-weight:600;color:var(--txt)">${s.name}</span></div>
+          <div class="dash-row"><span class="dash-label">Status</span><span><span class="badge ${stBadge}">${stLabel}</span></span></div>
+          <div class="dash-row"><span class="dash-label">Assigned #</span><span class="dash-val" style="font-family:var(--mono)">${phone}</span></div>
+          <div class="dash-row"><span class="dash-label">SMS</span><span>${smsBadge}</span></div>
+          <div class="dash-row"><span class="dash-label">Last SMS</span><span class="dash-val">${lastSms}</span></div>
+          <div class="dash-row"><span class="dash-label">Fail Prob</span><span class="dash-val" style="font-family:var(--mono);color:${s.failProb>=70?'#FCA5A5':s.failProb>=30?'#FCD34D':'#34D399'}">${s.failProb}%</span></div>
+        </div>`;
+      }).join('');
+    }
+
+    function refreshAlertLogs() {
+      _renderSmsLog();
+    }
+
+    // runAlert: now uses frontend SMS simulation (no backend fetch)
+    async function runAlert(payload = {}) {
+      try {
+        const slug = payload.server || currentPredictServer || 'unknown';
+        const prob = Number.isFinite(payload.failure_probability) ? payload.failure_probability : 0;
+        simulateSmsAlert(slug, prob);
+        refreshAlertDashboard();
+      } catch (e) {
+        console.error('runAlert error:', e);
+      }
+    }
+
+    function clearAlerts() {
+      _smsLog.length = 0;
+      _smsDelivered = 0;
+      _renderSmsLog();
+      refreshAlertDashboard();
+    }
+
+    // ── DEPLOY DOCS ───────────────────────────────────────────────
+    function initDeployDocs() {
+      const dockerfile = `# NeuroGuard — Production Dockerfile
+# Multi-stage build for minimal image size
+
+FROM python:3.11-slim AS builder
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+FROM python:3.11-slim AS runtime
+WORKDIR /app
+# Security: non-root user
+RUN useradd --create-home --shell /bin/bash neuroguard
+COPY --from=builder /root/.local /root/.local
+COPY . .
+RUN chown -R neuroguard:neuroguard /app
+USER neuroguard
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \\
+  CMD curl -f http://localhost:8000/health || exit 1
+
+EXPOSE 8000
+ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONUNBUFFERED=1
+ENV WORKERS=4
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", \\
+     "--workers", "4", "--access-log", "--log-level", "info"]
+
+# requirements.txt:
+# fastapi>=0.110.0
+# uvicorn[standard]>=0.27.0
+# scikit-learn>=1.4.0
+# xgboost>=2.0.0
+# numpy>=1.26.0
+# pydantic>=2.0.0
+# tenacity>=8.2.0
+# requests>=2.31.0`;
+
+      const k8sYaml = `# NeuroGuard — Kubernetes Deployment
+# Includes: Deployment, Service, HPA, PodDisruptionBudget, NetworkPolicy
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neuroguard
+  namespace: production
+  labels:
+    app: neuroguard
+    version: v1.0.0
+    team: sre
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: neuroguard
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: neuroguard
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: neuroguard
+        image: your-registry/neuroguard:v1.0.0
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: SLACK_WEBHOOK
+          valueFrom:
+            secretKeyRef:
+              name: neuroguard-secrets
+              key: slack-webhook
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      terminationGracePeriodSeconds: 60
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neuroguard
+  namespace: production
+spec:
+  selector:
+    app: neuroguard
+  ports:
+  - port: 80
+    targetPort: 8000
+    name: http
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: neuroguard-hpa
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: neuroguard
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 4
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: neuroguard-pdb
+  namespace: production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: neuroguard`;
+
+      const backendCode = `#!/usr/bin/env python3
+"""
+NeuroGuard — FastAPI Backend
+POST /predict  →  failure prediction
+POST /simulate →  digital twin simulation
+POST /explain  →  plain-language explainability
+POST /alerts   →  alert dispatch
+POST /auto-heal → remediation playbook
+GET  /health   →  health check
+GET  /metrics  →  Prometheus metrics
+"""
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field, validator
+from typing import Optional, List
+import numpy as np
+import logging
+import hashlib
+from datetime import datetime
+from contextlib import asynccontextmanager
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("neuroguard")
+
+# ── Models ────────────────────────────────────────────────────
+class ServerMetrics(BaseModel):
+    cpu: float = Field(..., ge=0, le=100, description="CPU usage %")
+    ram: float = Field(..., ge=0, le=100, description="RAM usage %")
+    disk: float = Field(..., ge=0, le=100, description="Disk I/O %")
+    network: float = Field(..., ge=0, le=100, description="Network loss %")
+    logs: Optional[str] = Field("", description="Recent log lines")
+    server_name: Optional[str] = "unknown"
+
+class PredictionResponse(BaseModel):
+    failure_probability: float
+    health_score: float
+    time_to_failure: str
+    severity: str
+    risk_factors: dict
+    shap_values: dict
+    timestamp: str
+    inference_ms: int
+
+class AlertRequest(BaseModel):
+    server: str
+    failure_probability: float
+    channels: List[str] = ["slack"]
+    slack_webhook: Optional[str] = None
+    pagerduty_key: Optional[str] = None
+
+class HealRequest(BaseModel):
+    server: str
+    cpu: float
+    ram: float
+    disk: float
+    failure_probability: float
+    namespace: str = "production"
+
+# ── App ───────────────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("NeuroGuard starting up...")
+    yield
+    logger.info("NeuroGuard shutting down...")
+
+app = FastAPI(
+    title="NeuroGuard API",
+    description="AI-Powered Predictive Maintenance with Digital Twin Intelligence",
+    version="1.0.0",
+    lifespan=lifespan
+)
+app.add_middleware(CORSMiddleware, allow_origins=["*"],
+                   allow_methods=["*"], allow_headers=["*"])
+
+# ── Prediction Engine ─────────────────────────────────────────
+def compute_prediction(m: ServerMetrics) -> dict:
+    log_score = 15 if "out of memory" in m.logs.lower() else \\
+                8 if "error" in m.logs.lower() else \\
+                4 if "warning" in m.logs.lower() else 0
+
+    risk = m.cpu*0.35 + m.ram*0.28 + m.disk*0.20 + min(m.network,30)/30*10*0.12
+    fail_prob = min(99, round(risk*0.95 + (8 if m.cpu>85 else 0) + (6 if m.ram>80 else 0) + log_score))
+    health = max(1, 100 - round(risk * 0.85))
+    ttf_h = max(0.5, (100-fail_prob)/8)
+
+    return {
+        "failure_probability": fail_prob,
+        "health_score": health,
+        "time_to_failure": f"{ttf_h:.1f}h",
+        "severity": "CRITICAL" if fail_prob>=70 else "WARNING" if fail_prob>=40 else "INFO",
+        "risk_factors": {
+            "cpu_risk": "HIGH" if m.cpu>85 else "MEDIUM" if m.cpu>70 else "LOW",
+            "ram_risk": "HIGH" if m.ram>80 else "MEDIUM" if m.ram>65 else "LOW",
+            "disk_risk": "HIGH" if m.disk>85 else "MEDIUM" if m.disk>65 else "LOW",
+            "net_risk": "HIGH" if m.network>15 else "MEDIUM" if m.network>8 else "LOW",
+        },
+        "shap_values": {
+            "cpu_trend": round(m.cpu/100 * 0.42, 3),
+            "mem_spikes": round(m.ram/100 * 0.31, 3),
+            "log_anomaly": round(log_score/15 * 0.19, 3),
+            "disk_latency": round(m.disk/100 * 0.08, 3),
+        },
+        "timestamp": datetime.utcnow().isoformat(),
+        "inference_ms": np.random.randint(8, 45)
+    }
+
+# ── Routes ────────────────────────────────────────────────────
+@app.get("/health")
+async def health(): return {"status": "healthy", "version": "1.0.0"}
+
+@app.post("/predict", response_model=PredictionResponse, tags=["Prediction"])
+async def predict(metrics: ServerMetrics):
+    """Run AI failure prediction on server metrics."""
+    return compute_prediction(metrics)
+
+@app.post("/simulate", tags=["Digital Twin"])
+async def simulate(cpu_mult: float = 1.5, mem_pressure: float = 60,
+                   disk_sat: float = 40, net_loss: float = 2):
+    """Simulate server health under stress scenarios."""
+    stress = (cpu_mult-1)/3*40 + (mem_pressure-30)/70*25 + disk_sat/100*20 + net_loss/30*15
+    health = max(5, round(78 - stress))
+    return {"health": health, "failure_probability": min(99, round(stress*1.6+12)),
+            "time_to_failure": f"{max(0.5,(100-health)/8):.1f}h"}
+
+@app.post("/explain", tags=["Explainability"])
+async def explain(metrics: ServerMetrics):
+    """Generate plain-language explanation of failure risk."""
+    pred = compute_prediction(metrics)
+    drivers = sorted(pred["shap_values"].items(), key=lambda x: -x[1])
+    top = drivers[0][0].replace("_", " ")
+    return {
+        "explanation": f"This server has a {pred['failure_probability']}% chance of failure. "
+                       f"The primary driver is {top} at {pred['shap_values'][drivers[0][0]]} SHAP weight. "
+                       f"Health score is {pred['health_score']}% with estimated time to failure of {pred['time_to_failure']}.",
+        "severity": pred["severity"],
+        "shap_values": pred["shap_values"]
+    }
+
+@app.post("/auto-heal", tags=["Remediation"])
+async def auto_heal(req: HealRequest):
+    """Generate rule-based + ML-triggered auto-heal playbook."""
+    actions = []
+    if req.cpu > 85: actions.append({"action": "scale_pods", "command": f"kubectl scale deploy {req.server} --replicas=+2 -n {req.namespace}"})
+    if req.ram > 80: actions.append({"action": "flush_cache", "command": "redis-cli FLUSHALL && sync && echo 3 > /proc/sys/vm/drop_caches"})
+    if req.disk > 85: actions.append({"action": "clean_disk", "command": "journalctl --vacuum-size=500M && docker system prune -f"})
+    if req.failure_probability > 70: actions.append({"action": "circuit_breaker", "command": f"kubectl annotate svc {req.server} circuit-breaker=open -n {req.namespace}"})
+    return {"server": req.server, "actions": actions, "severity": "CRITICAL" if req.failure_probability>=70 else "WARNING"}
+
+@app.post("/alerts", tags=["Alerting"])
+async def send_alert(req: AlertRequest, background: BackgroundTasks):
+    """Dispatch alerts to configured channels with deduplication."""
+    severity = "CRITICAL" if req.failure_probability>=70 else "WARNING" if req.failure_probability>=30 else "INFO"
+    dedup_key = hashlib.md5(f"{req.server}{severity}".encode()).hexdigest()[:12]
+    return {"status": "dispatched", "severity": severity, "dedup_key": dedup_key,
+            "channels": req.channels, "alert_id": f"ng-{datetime.utcnow().strftime('%H%M%S')}"}`;
+
+      document.getElementById('deploy-dockerfile').textContent = dockerfile;
+      document.getElementById('deploy-k8s').textContent = k8sYaml;
+      document.getElementById('deploy-backend').textContent = backendCode;
+
+      // API Docs
+      const endpoints = [
+        { method: 'POST', path: '/predict', tag: 'Prediction', desc: 'Run AI failure prediction on server metrics', body: '{\n  "cpu": 91,\n  "ram": 87,\n  "disk": 62,\n  "network": 4,\n  "logs": "ERROR: out of memory"\n}', response: '{\n  "failure_probability": 84,\n  "health_score": 16,\n  "time_to_failure": "6.2h",\n  "severity": "CRITICAL"\n}' },
+        { method: 'POST', path: '/simulate', tag: 'Digital Twin', desc: 'Simulate server under stress scenarios', body: '{\n  "cpu_mult": 2.5,\n  "mem_pressure": 80,\n  "disk_sat": 70\n}', response: '{\n  "health": 42,\n  "failure_probability": 71,\n  "time_to_failure": "7.3h"\n}' },
+        { method: 'POST', path: '/explain', tag: 'Explainability', desc: 'Get plain-language explanation of failure risk', body: '{"cpu": 91, "ram": 87, "disk": 62, "network": 4}', response: '{\n  "explanation": "Server has 84% failure risk...",\n  "shap_values": {...}\n}' },
+        { method: 'POST', path: '/auto-heal', tag: 'Remediation', desc: 'Generate auto-heal playbook with executable commands', body: '{\n  "server": "json-node",\n  "cpu": 91,\n  "ram": 87,\n  "failure_probability": 84\n}', response: '{\n  "actions": [\n    {"action": "scale_pods", "command": "kubectl scale..."}\n  ]\n}' },
+        { method: 'POST', path: '/alerts', tag: 'Alerting', desc: 'Dispatch severity alerts to registered SMS phone numbers', body: '{\n  "server": "json-node",\n  "failure_probability": 84,\n  "phone_numbers": ["9880570117", "9483301006"]\n}', response: '{\n  "status": "dispatched",\n  "severity": "CRITICAL",\n  "alert_id": "ng-142301"\n}' },
+        { method: 'GET', path: '/health', tag: 'System', desc: 'Health check endpoint for load balancers and probes', body: null, response: '{"status": "healthy", "version": "1.0.0"}' },
+      ];
+
+      const methodColor = { 'POST': '#3B82F6', 'GET': '#10B981', 'DELETE': '#EF4444', 'PUT': '#F59E0B' };
+      document.getElementById('api-docs-content').innerHTML = endpoints.map(e => `
+    <div style="border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg4);cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+        <span style="background:${methodColor[e.method] || '#666'};color:#fff;font-size:10px;padding:2px 8px;border-radius:4px;font-family:var(--mono);font-weight:600;min-width:42px;text-align:center">${e.method}</span>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:500">${e.path}</span>
+        <span style="color:var(--txt3);font-size:11px;margin-left:auto">${e.tag}</span>
+      </div>
+      <div style="padding:12px 14px;font-size:12px;display:none">
+        <p style="color:var(--txt2);margin-bottom:10px">${e.desc}</p>
+        ${e.body ? `<div style="font-size:10px;color:var(--txt3);font-family:var(--mono);margin-bottom:4px">REQUEST BODY</div><div class="output-block" style="margin-bottom:10px;max-height:120px">${e.body}</div>` : ''}
+        <div style="font-size:10px;color:var(--txt3);font-family:var(--mono);margin-bottom:4px">RESPONSE</div>
+        <div class="output-block" style="max-height:120px">${e.response}</div>
+        <div style="margin-top:10px;font-size:10px;color:var(--txt3);font-family:var(--mono)">CURL</div>
+        <div class="output-block" style="margin-top:4px;max-height:60px">curl -X ${e.method} http://localhost:8000${e.path}${e.body ? ` \\\n  -H "Content-Type: application/json" \\\n  -d '${e.body.replace(/\n/g, ' ').replace(/\s+/g, ' ')}'` : ''}</div>
+      </div>
+    </div>`).join('');
+    }
+
+    function switchDeployTab(tab) {
+      document.querySelectorAll('#deploy-tabs .tab').forEach((t, i) => {
+        const tabs = ['dockerfile', 'k8s', 'backend', 'apidocs'];
+        t.classList.toggle('active', tabs[i] === tab);
+      });
+      document.querySelectorAll('[id^="dt-"]').forEach(s => s.classList.remove('active'));
+      document.getElementById('dt-' + tab).classList.add('active');
+    }
+
+    // ── UTILS ─────────────────────────────────────────────────────
+    function copyOutput(id) {
+      const el = document.getElementById(id);
+      if (el) copyText(el.textContent);
+    }
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied';
+        setTimeout(() => btn.textContent = orig, 2000);
+      });
+    }
+
+    // ── LIVE TICKERS ──────────────────────────────────────────────
+    let tick = 0;
+    setInterval(() => {
+      if (datasetsLoaded) return;
+      tick++;
+      const h = Math.round(78 + Math.sin(tick * 0.3) * 3);
+      const e = document.getElementById('ov-health');
+      if (e) { e.textContent = h + '%'; document.getElementById('ov-health-bar').style.width = h + '%'; }
+      const a = Math.round(14 + Math.sin(tick * 0.5) * 3);
+      const ae = document.getElementById('ov-anomalies');
+      if (ae) ae.textContent = a;
+    }, 60000);
+
+    // ── INIT ──────────────────────────────────────────────────────
+    buildOverviewTable();
+    initCharts();
+    buildShap();
+    updateSim();
+    setTimeout(initDeployDocs, 100);
+    loadDatasetsOnStart();
+    startAutoMonitoring();
+  </script>
+  <!-- Code injected by live-server -->
+  <script>
+    // <![CDATA[  <-- For SVG support
+    if ('WebSocket' in window) {
+      (function () {
+        function refreshCSS() {
+          var sheets = [].slice.call(document.getElementsByTagName("link"));
+          var head = document.getElementsByTagName("head")[0];
+          for (var i = 0; i < sheets.length; ++i) {
+            var elem = sheets[i];
+            var parent = elem.parentElement || head;
+            parent.removeChild(elem);
+            var rel = elem.rel;
+            if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+              var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+              elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+            }
+            parent.appendChild(elem);
+          }
+        }
+        var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+        var address = protocol + window.location.host + window.location.pathname + '/ws';
+        var socket = new WebSocket(address);
+        socket.onmessage = function (msg) {
+          if (msg.data == 'reload') window.location.reload();
+          else if (msg.data == 'refreshcss') refreshCSS();
+        };
+        if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+          console.log('Live reload enabled.');
+          sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+        }
+      })();
+    }
+    else {
+      console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+    }
+    // ]]>
+  </script>
+  <!-- Code injected by live-server -->
+  <script>
+    // <![CDATA[  <-- For SVG support
+    if ('WebSocket' in window) {
+      (function () {
+        function refreshCSS() {
+          var sheets = [].slice.call(document.getElementsByTagName("link"));
+          var head = document.getElementsByTagName("head")[0];
+          for (var i = 0; i < sheets.length; ++i) {
+            var elem = sheets[i];
+            var parent = elem.parentElement || head;
+            parent.removeChild(elem);
+            var rel = elem.rel;
+            if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+              var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+              elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+            }
+            parent.appendChild(elem);
+          }
+        }
+        var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+        var address = protocol + window.location.host + window.location.pathname + '/ws';
+        var socket = new WebSocket(address);
+        socket.onmessage = function (msg) {
+          if (msg.data == 'reload') window.location.reload();
+          else if (msg.data == 'refreshcss') refreshCSS();
+        };
+        if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+          console.log('Live reload enabled.');
+          sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+        }
+      })();
+    }
+    else {
+      console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+    }
+    // ]]>
+  </script>
+</body>
+
+</html>
